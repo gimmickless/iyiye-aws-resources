@@ -1,3 +1,7 @@
+*.js
+!jest.config.js
+*.d.ts
+
 # Logs
 logs
 *.log
@@ -102,3 +106,16 @@ dist
 
 # TernJS port file
 .tern-port
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Parcel default cache directory
+.parcel-cache
+
+# VSCode
+.vscode/
+
+# Firewall solutions
+.npmrc
