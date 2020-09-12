@@ -1,17 +1,14 @@
-import { Mfa, UserPool } from '@aws-cdk/aws-cognito'
-import * as cdk from '@aws-cdk/core'
-import * as config from '../config'
+import { Construct, Stack, StackProps } from '@aws-cdk/core'
+import { CognitoNestedStack } from './nestedStack/cognito'
 
-export class IyiyeNativeCdkStack extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
+export class CognitoStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
     // The code that defines your stack goes here
-    new UserPool(this, 'IyiyeUserPool', {
-      userPoolName: config.cognitoUserPoolName,
-      mfa: Mfa.OFF,
-      autoVerify: {
-        email: true
+    new CognitoNestedStack(scope, 'IyiyeCognitoNestedStack', {
+      parameters: {
+        userPoolName: 'iyiye-up'
       }
     })
   }
