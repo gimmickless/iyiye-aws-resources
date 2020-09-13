@@ -8,7 +8,8 @@ export class CognitoStack extends Stack {
     // The code that defines your stack goes here
     new CognitoNestedStack(scope, 'IyiyeCognitoNestedStack', {
       parameters: {
-        userPoolName: 'iyiye-up'
+        userPoolName: 'iyiye-up',
+        userPoolClientName: 'iyiye-up-cl'
       }
     })
   }
