@@ -6,7 +6,16 @@ export class CognitoStack extends Stack {
     super(scope, id, props)
 
     // The code that defines your stack goes here
-    new CognitoNestedStack(scope, 'IyiyeCognitoNestedStack', {
+    const storageStack = new CognitoNestedStack(
+      scope,
+      'IyiyeStorageNestedStack',
+      {
+        parameters: {
+          userFielsBucketName: 'iyiye-up'
+        }
+      }
+    )
+    const cognitoStack = new CognitoNestedStack(scope, 'IyiyeCognitoNestedStack', {
       parameters: {
         userPoolName: 'iyiye-up',
         userPoolClientName: 'iyiye-up-cl',

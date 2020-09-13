@@ -1,13 +1,15 @@
-import { NestedStack, NestedStackProps } from '@aws-cdk/aws-cloudformation'
 import { AccountRecovery, CfnIdentityPool, CfnUserPoolGroup, Mfa, UserPool, UserPoolClient } from '@aws-cdk/aws-cognito'
-import { ManagedPolicy, Role, WebIdentityPrincipal } from '@aws-cdk/aws-iam'
-import {Construct } from '@aws-cdk/core'
+import { Effect, ManagedPolicy, PolicyDocument, PolicyStatement, Role, WebIdentityPrincipal } from '@aws-cdk/aws-iam'
+import {
+  Construct,
+  CfnOutput,
+  NestedStack,
+  NestedStackProps
+} from '@aws-cdk/core'
 
 export class CognitoNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props?: NestedStackProps) {
     super(scope, id, props)
-
-    // The code that defines your stack goes here
 
     // User Pool
     const userPool = new UserPool(this, 'IyiyeUserPool', {
@@ -45,26 +47,22 @@ export class CognitoNestedStack extends NestedStack {
     })
 
     // User Groups
-    const defaultUserGroupIamRole = new Role(
-      this,
-      'IyiyeDefaultUserGroupRole',
-      {
-        assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
-          StringEquals: {
-            'cognito-identity.amazonaws.com:aud': userPool.userPoolId
-          }
-        }),
-        managedPolicies: [
-          ManagedPolicy.fromManagedPolicyArn(
-            this,
-            'IyiyeDefaultUserGroupRoleAppSyncPolicy',
-            'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
-          )
-        ]
-      }
-    )
+    const defaultUserGroupRole = new Role(this, 'IyiyeDefaultUserGroupRole', {
+      assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+        StringEquals: {
+          'cognito-identity.amazonaws.com:aud': userPool.userPoolId
+        }
+      }),
+      managedPolicies: [
+        ManagedPolicy.fromManagedPolicyArn(
+          this,
+          'IyiyeDefaultUserGroupRoleAppSyncPolicy',
+          'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
+        )
+      ]
+    })
 
-    const adminUserGroupIamRole = new Role(this, 'IyiyeAdminUserGroupRole', {
+    const adminUserGroupRole = new Role(this, 'IyiyeAdminUserGroupRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': userPool.userPoolId
@@ -85,14 +83,14 @@ export class CognitoNestedStack extends NestedStack {
       {
         userPoolId: userPool.userPoolId,
         groupName: props?.parameters?.defaultUserPoolGroupName,
-        roleArn: defaultUserGroupIamRole.roleArn
+        roleArn: defaultUserGroupRole.roleArn
       }
     )
 
     const adminUserGroup = new CfnUserPoolGroup(this, 'IyiyeAdminUserGroup', {
       userPoolId: userPool.userPoolId,
       groupName: props?.parameters?.adminUserPoolGroupName,
-      roleArn: adminUserGroupIamRole.roleArn
+      roleArn: adminUserGroupRole.roleArn
     })
 
     // Identity Pools
@@ -107,6 +105,33 @@ export class CognitoNestedStack extends NestedStack {
       ]
     })
 
-    //TODO: Add CognitoAuthorizedRole, CognitoUnauthorizedRole, IdentityPoolRoleAttachment
+    //TODO: Create Storage Stack (to use )
+    //TODO: Add/Complete CognitoAuthorizedRole, CognitoUnauthorizedRole, IdentityPoolRoleAttachment
+    const unauthIdentityPoolRole = new Role(this, 'IyiyeAdminUserGroupRole', {
+      assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+        StringEquals: {
+          'cognito-identity.amazonaws.com:aud': userPool.userPoolId
+        },
+        'ForAnyValue:StringLike': {
+          'cognito-identity.amazonaws.com:amr': 'unauthenticated'
+        }
+      }),
+      inlinePolicies: {
+        iyiyeUnauthIdentityPoolRolePolicy: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['s3:GetObject'],
+              resources: []
+            })
+          ]
+        })
+      }
+    })
+
+    //TODO: Add Outputs
+    new CfnOutput(this, 'IyiyeCognitoNestedStackOutput', {
+      value: ''
+    })
   }
 }
