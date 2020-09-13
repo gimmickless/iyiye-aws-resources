@@ -1,5 +1,6 @@
 import { NestedStack, NestedStackProps } from '@aws-cdk/aws-cloudformation'
-import { AccountRecovery, Mfa, UserPool } from '@aws-cdk/aws-cognito'
+import { AccountRecovery, CfnIdentityPool, CfnUserPoolGroup, Mfa, UserPool, UserPoolClient } from '@aws-cdk/aws-cognito'
+import { ManagedPolicy, Role, WebIdentityPrincipal } from '@aws-cdk/aws-iam'
 import {Construct } from '@aws-cdk/core'
 
 export class CognitoNestedStack extends NestedStack {
@@ -7,6 +8,8 @@ export class CognitoNestedStack extends NestedStack {
     super(scope, id, props)
 
     // The code that defines your stack goes here
+
+    // User Pool
     const userPool = new UserPool(this, 'IyiyeUserPool', {
       userPoolName: props?.parameters?.userPoolName,
       accountRecovery: AccountRecovery.EMAIL_ONLY,
@@ -31,13 +34,79 @@ export class CognitoNestedStack extends NestedStack {
         email: { required: true },
         givenName: { required: true },
         familyName: { required: true },
-        locale: {mutable: true}
+        locale: { mutable: true }
       }
     })
 
-    userPool.addClient('IyiyeUserPoolClient', {
+    const userPoolClient = new UserPoolClient(this, 'IyiyeUserPoolClient', {
       userPoolClientName: props?.parameters?.userPoolClientName,
-      generateSecret: false
+      generateSecret: false,
+      userPool: userPool
     })
+
+    // User Groups
+    const defaultUserGroupIamRole = new Role(
+      this,
+      'IyiyeDefaultUserGroupRole',
+      {
+        assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+          StringEquals: {
+            'cognito-identity.amazonaws.com:aud': userPool.userPoolId
+          }
+        }),
+        managedPolicies: [
+          ManagedPolicy.fromManagedPolicyArn(
+            this,
+            'IyiyeDefaultUserGroupRoleAppSyncPolicy',
+            'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
+          )
+        ]
+      }
+    )
+
+    const adminUserGroupIamRole = new Role(this, 'IyiyeAdminUserGroupRole', {
+      assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+        StringEquals: {
+          'cognito-identity.amazonaws.com:aud': userPool.userPoolId
+        }
+      }),
+      managedPolicies: [
+        ManagedPolicy.fromManagedPolicyArn(
+          this,
+          'IyiyeAdminUserGroupRoleAppSyncPolicy',
+          'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
+        )
+      ]
+    })
+
+    const defaultUserGroup = new CfnUserPoolGroup(
+      this,
+      'IyiyeDefaultUserGroup',
+      {
+        userPoolId: userPool.userPoolId,
+        groupName: props?.parameters?.defaultUserPoolGroupName,
+        roleArn: defaultUserGroupIamRole.roleArn
+      }
+    )
+
+    const adminUserGroup = new CfnUserPoolGroup(this, 'IyiyeAdminUserGroup', {
+      userPoolId: userPool.userPoolId,
+      groupName: props?.parameters?.adminUserPoolGroupName,
+      roleArn: adminUserGroupIamRole.roleArn
+    })
+
+    // Identity Pools
+    const identityPool = new CfnIdentityPool(this, 'IyiyeIdentityPool', {
+      identityPoolName: props?.parameters?.identityPoolName,
+      allowUnauthenticatedIdentities: true,
+      cognitoIdentityProviders: [
+        {
+          clientId: userPoolClient.userPoolClientId,
+          providerName: userPool.userPoolProviderName
+        }
+      ]
+    })
+
+    //TODO: Add CognitoAuthorizedRole, CognitoUnauthorizedRole, IdentityPoolRoleAttachment
   }
 }

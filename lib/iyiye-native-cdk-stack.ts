@@ -9,7 +9,9 @@ export class CognitoStack extends Stack {
     new CognitoNestedStack(scope, 'IyiyeCognitoNestedStack', {
       parameters: {
         userPoolName: 'iyiye-up',
-        userPoolClientName: 'iyiye-up-cl'
+        userPoolClientName: 'iyiye-up-cl',
+        defaultUserPoolGroupName: 'iyiye-default-ug',
+        adminUserPoolGroupName: 'iyiye-admin-ug'
       }
     })
   }

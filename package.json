@@ -21,8 +21,9 @@
     "typescript": "~3.9.7"
   },
   "dependencies": {
-    "@aws-cdk/aws-cloudformation": "^1.61.1",
+    "@aws-cdk/aws-cloudformation": "1.61.1",
     "@aws-cdk/aws-cognito": "1.61.1",
+    "@aws-cdk/aws-iam": "1.61.1",
     "@aws-cdk/core": "1.61.1",
     "source-map-support": "^0.5.16"
   }
