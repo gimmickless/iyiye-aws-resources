@@ -6,7 +6,7 @@ import { IamNestedStack } from './nestedStack/iam'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
 
-export class CognitoStack extends Stack {
+export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
