@@ -5,14 +5,14 @@ import {
   NestedStackProps
 } from '@aws-cdk/core'
 
-export class StorageNestedStack extends NestedStack {
+export class PipelineNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props?: NestedStackProps) {
     super(scope, id, props)
 
-    // TODO: Create buckets
+    // TODO: Create pipelines
 
     //TODO: Add Outputs
-    new CfnOutput(this, 'IyiyeStorageUserFilesBucketArn', {
+    new CfnOutput(this, '', {
       value: ''
     })
   }
