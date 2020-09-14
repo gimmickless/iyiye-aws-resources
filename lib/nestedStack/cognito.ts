@@ -7,13 +7,25 @@ import {
   NestedStackProps
 } from '@aws-cdk/core'
 
+interface CognitoNestedStackProps extends NestedStackProps {
+  userPoolName: string
+  userPoolClientName: string
+  defaultUserPoolGroupName: string
+  adminUserPoolGroupName: string
+  identityPoolName: string
+}
+
 export class CognitoNestedStack extends NestedStack {
-  constructor(scope: Construct, id: string, props?: NestedStackProps) {
+  // Properties
+  userPool: UserPool
+
+  // Constructor
+  constructor(scope: Construct, id: string, props?: CognitoNestedStackProps) {
     super(scope, id, props)
 
     // User Pool
-    const userPool = new UserPool(this, 'IyiyeUserPool', {
-      userPoolName: props?.parameters?.userPoolName,
+    this.userPool = new UserPool(this, 'IyiyeUserPool', {
+      userPoolName: props?.userPoolName,
       accountRecovery: AccountRecovery.EMAIL_ONLY,
       autoVerify: {
         email: true
@@ -41,16 +53,16 @@ export class CognitoNestedStack extends NestedStack {
     })
 
     const userPoolClient = new UserPoolClient(this, 'IyiyeUserPoolClient', {
-      userPoolClientName: props?.parameters?.userPoolClientName,
+      userPoolClientName: props?.userPoolClientName,
       generateSecret: false,
-      userPool: userPool
+      userPool: this.userPool
     })
 
     // User Groups
     const defaultUserGroupRole = new Role(this, 'IyiyeDefaultUserGroupRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
-          'cognito-identity.amazonaws.com:aud': userPool.userPoolId
+          'cognito-identity.amazonaws.com:aud': this.userPool.userPoolId
         }
       }),
       managedPolicies: [
@@ -65,7 +77,7 @@ export class CognitoNestedStack extends NestedStack {
     const adminUserGroupRole = new Role(this, 'IyiyeAdminUserGroupRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
-          'cognito-identity.amazonaws.com:aud': userPool.userPoolId
+          'cognito-identity.amazonaws.com:aud': this.userPool.userPoolId
         }
       }),
       managedPolicies: [
@@ -81,26 +93,26 @@ export class CognitoNestedStack extends NestedStack {
       this,
       'IyiyeDefaultUserGroup',
       {
-        userPoolId: userPool.userPoolId,
-        groupName: props?.parameters?.defaultUserPoolGroupName,
+        userPoolId: this.userPool.userPoolId,
+        groupName: props?.defaultUserPoolGroupName,
         roleArn: defaultUserGroupRole.roleArn
       }
     )
 
     const adminUserGroup = new CfnUserPoolGroup(this, 'IyiyeAdminUserGroup', {
-      userPoolId: userPool.userPoolId,
-      groupName: props?.parameters?.adminUserPoolGroupName,
+      userPoolId: this.userPool.userPoolId,
+      groupName: props?.adminUserPoolGroupName,
       roleArn: adminUserGroupRole.roleArn
     })
 
     // Identity Pools
     const identityPool = new CfnIdentityPool(this, 'IyiyeIdentityPool', {
-      identityPoolName: props?.parameters?.identityPoolName,
+      identityPoolName: props?.identityPoolName,
       allowUnauthenticatedIdentities: true,
       cognitoIdentityProviders: [
         {
           clientId: userPoolClient.userPoolClientId,
-          providerName: userPool.userPoolProviderName
+          providerName: this.userPool.userPoolProviderName
         }
       ]
     })
@@ -110,7 +122,7 @@ export class CognitoNestedStack extends NestedStack {
     const unauthIdentityPoolRole = new Role(this, 'IyiyeAdminUserGroupRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
-          'cognito-identity.amazonaws.com:aud': userPool.userPoolId
+          'cognito-identity.amazonaws.com:aud': this.userPool.userPoolId
         },
         'ForAnyValue:StringLike': {
           'cognito-identity.amazonaws.com:amr': 'unauthenticated'
