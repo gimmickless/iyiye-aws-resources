@@ -24,7 +24,7 @@ export class CognitoNestedStack extends NestedStack {
     super(scope, id, props)
 
     // User Pool
-    this.userPool = new UserPool(this, 'IyiyeUserPool', {
+    this.userPool = new UserPool(this, 'UserPool', {
       userPoolName: props?.userPoolName,
       accountRecovery: AccountRecovery.EMAIL_ONLY,
       autoVerify: {
@@ -52,14 +52,14 @@ export class CognitoNestedStack extends NestedStack {
       }
     })
 
-    const userPoolClient = new UserPoolClient(this, 'IyiyeUserPoolClient', {
+    const userPoolClient = new UserPoolClient(this, 'UserPoolClient', {
       userPoolClientName: props?.userPoolClientName,
       generateSecret: false,
       userPool: this.userPool
     })
 
     // User Groups
-    const defaultUserGroupRole = new Role(this, 'IyiyeDefaultUserGroupRole', {
+    const defaultUserGroupRole = new Role(this, 'DefaultUserGroupRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': this.userPool.userPoolId
@@ -68,13 +68,13 @@ export class CognitoNestedStack extends NestedStack {
       managedPolicies: [
         ManagedPolicy.fromManagedPolicyArn(
           this,
-          'IyiyeDefaultUserGroupRoleAppSyncPolicy',
+          'DefaultUserGroupRoleAppSyncPolicy',
           'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
         )
       ]
     })
 
-    const adminUserGroupRole = new Role(this, 'IyiyeAdminUserGroupRole', {
+    const adminUserGroupRole = new Role(this, 'AdminUserGroupRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': this.userPool.userPoolId
@@ -83,7 +83,7 @@ export class CognitoNestedStack extends NestedStack {
       managedPolicies: [
         ManagedPolicy.fromManagedPolicyArn(
           this,
-          'IyiyeAdminUserGroupRoleAppSyncPolicy',
+          'AdminUserGroupRoleAppSyncPolicy',
           'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
         )
       ]
@@ -91,7 +91,7 @@ export class CognitoNestedStack extends NestedStack {
 
     new CfnUserPoolGroup(
       this,
-      'IyiyeDefaultUserGroup',
+      'DefaultUserGroup',
       {
         userPoolId: this.userPool.userPoolId,
         groupName: props?.defaultUserPoolGroupName,
@@ -99,14 +99,14 @@ export class CognitoNestedStack extends NestedStack {
       }
     )
 
-    new CfnUserPoolGroup(this, 'IyiyeAdminUserGroup', {
+    new CfnUserPoolGroup(this, 'AdminUserGroup', {
       userPoolId: this.userPool.userPoolId,
       groupName: props?.adminUserPoolGroupName,
       roleArn: adminUserGroupRole.roleArn
     })
 
     // Identity Pools
-    const identityPool = new CfnIdentityPool(this, 'IyiyeIdentityPool', {
+    const identityPool = new CfnIdentityPool(this, 'IdentityPool', {
       identityPoolName: props?.identityPoolName,
       allowUnauthenticatedIdentities: true,
       cognitoIdentityProviders: [
@@ -118,7 +118,7 @@ export class CognitoNestedStack extends NestedStack {
     })
 
     //TODO: Add/Complete CognitoAuthorizedRole, CognitoUnauthorizedRole, IdentityPoolRoleAttachment
-    const unauthIdentityPoolRole = new Role(this, 'IyiyeUnauthIdentityPoolRole', {
+    const unauthIdentityPoolRole = new Role(this, 'UnauthIdentityPoolRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': identityPool.ref
@@ -177,7 +177,7 @@ export class CognitoNestedStack extends NestedStack {
       }
     })
 
-    const authIdentityPoolRole = new Role(this, 'IyiyeAuthIdentityPoolRole', {
+    const authIdentityPoolRole = new Role(this, 'AuthIdentityPoolRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': identityPool.ref
@@ -242,7 +242,7 @@ export class CognitoNestedStack extends NestedStack {
       }
     })
 
-    new CfnIdentityPoolRoleAttachment(this, 'IyiyeIdentityPoolRoleAttachment', {
+    new CfnIdentityPoolRoleAttachment(this, 'IdentityPoolRoleAttachment', {
       identityPoolId: identityPool.ref,
       roles: {
         unauthenticated: unauthIdentityPoolRole.roleArn,

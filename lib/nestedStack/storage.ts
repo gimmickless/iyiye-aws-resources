@@ -20,7 +20,7 @@ export class StorageNestedStack extends NestedStack {
     super(scope, id, props)
 
     //
-    this.metaFilesBucket = new Bucket(this, 'IyiyeMetaFilesBucket', {
+    this.metaFilesBucket = new Bucket(this, 'MetaFilesBucket', {
       bucketName: props?.metaFilesBucketName,
       publicReadAccess: true,
       cors: [
@@ -31,7 +31,7 @@ export class StorageNestedStack extends NestedStack {
       ]
     })
 
-    this.userFilesBucket = new Bucket(this, 'IyiyeUserFilesBucket', {
+    this.userFilesBucket = new Bucket(this, 'UserFilesBucket', {
       bucketName: props?.userFilesBucketName,
       cors: [
         {
