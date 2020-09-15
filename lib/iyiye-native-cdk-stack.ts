@@ -11,38 +11,40 @@ export class IyiyeNativeCdkStack extends Stack {
     super(scope, id, props)
 
     // Nested stacks
-    const iamStack = new IamNestedStack(scope, 'IyiyeIamNestedStack', {})
+    const iamStack = new IamNestedStack(this, 'IyiyeIamNestedStack', {})
 
-    const dataStack = new DataNestedStack(scope, 'IyiyeDataNestedStack', {})
+    const dataStack = new DataNestedStack(this, 'IyiyeDataNestedStack', {})
 
     const storageStack = new StorageNestedStack(
-      scope,
+      this,
       'IyiyeStorageNestedStack',
       {
-        userFielsBucketName: 'iyiye-up'
+        metaFilesBucketName: 'iyiye-meta-files',
+        userFilesBucketName: 'iyiye-user-files'
       }
     )
 
     const pipelineStack = new PipelineNestedStack(
-      scope,
+      this,
       'IyiyePipelineNestedStack',
       {}
     )
 
     const cognitoStack = new CognitoNestedStack(
-      scope,
+      this,
       'IyiyeCognitoNestedStack',
       {
         userPoolName: 'iyiye-up',
         userPoolClientName: 'iyiye-up-cl',
         defaultUserPoolGroupName: 'iyiye-default-ug',
         adminUserPoolGroupName: 'iyiye-admin-ug',
-        identityPoolName: 'iyiye-ip'
+        identityPoolName: 'iyiye-ip',
+        userFilesBucketArn: storageStack.userFilesBucket.bucketArn
       }
     )
 
     const appsyncStack = new AppsyncNestedStack(
-      scope,
+      this,
       'IyiyeAppsyncNestedStack',
       {}
     )
