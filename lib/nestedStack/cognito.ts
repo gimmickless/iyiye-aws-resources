@@ -1,10 +1,21 @@
-import { AccountRecovery, CfnIdentityPool, CfnIdentityPoolRoleAttachment, CfnUserPoolGroup, Mfa, UserPool, UserPoolClient } from '@aws-cdk/aws-cognito'
-import { Effect, ManagedPolicy, PolicyDocument, PolicyStatement, Role, WebIdentityPrincipal } from '@aws-cdk/aws-iam'
 import {
-  Construct,
-  NestedStack,
-  NestedStackProps
-} from '@aws-cdk/core'
+  AccountRecovery,
+  CfnIdentityPool,
+  CfnIdentityPoolRoleAttachment,
+  CfnUserPoolGroup,
+  Mfa,
+  UserPool,
+  UserPoolClient
+} from '@aws-cdk/aws-cognito'
+import {
+  Effect,
+  ManagedPolicy,
+  PolicyDocument,
+  PolicyStatement,
+  Role,
+  WebIdentityPrincipal
+} from '@aws-cdk/aws-iam'
+import { Construct, NestedStack, NestedStackProps } from '@aws-cdk/core'
 
 interface CognitoNestedStackProps extends NestedStackProps {
   userPoolName: string
@@ -43,12 +54,16 @@ export class CognitoNestedStack extends NestedStack {
         username: true
       },
       standardAttributes: {
-        address: { required: true, mutable: true },
-        birthdate: { required: true },
-        email: { required: true },
         givenName: { required: true },
         familyName: { required: true },
-        locale: { mutable: true }
+        email: { required: true, mutable: false },
+        address: { required: true },
+        birthdate: { required: true, mutable: false },
+        phoneNumber: { required: false },
+        profilePicture: { required: false },
+        locale: { required: false },
+        lastUpdateTime: { required: false }
+        // zoneInfo is not available in StandardAttribute interface
       }
     })
 
@@ -89,15 +104,11 @@ export class CognitoNestedStack extends NestedStack {
       ]
     })
 
-    new CfnUserPoolGroup(
-      this,
-      'DefaultUserGroup',
-      {
-        userPoolId: this.userPool.userPoolId,
-        groupName: props?.defaultUserPoolGroupName,
-        roleArn: defaultUserGroupRole.roleArn
-      }
-    )
+    new CfnUserPoolGroup(this, 'DefaultUserGroup', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: props?.defaultUserPoolGroupName,
+      roleArn: defaultUserGroupRole.roleArn
+    })
 
     new CfnUserPoolGroup(this, 'AdminUserGroup', {
       userPoolId: this.userPool.userPoolId,
