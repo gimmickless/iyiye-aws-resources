@@ -19,29 +19,32 @@ export class IyiyeNativeCdkStack extends Stack {
       this,
       'StorageNestedStack',
       {
+        pipelineArtifactStoreBucketName: 'iyiye-pipeline-articat-store',
         metaFilesBucketName: 'iyiye-meta-files',
         userFilesBucketName: 'iyiye-user-files'
       }
     )
 
-    const pipelineStack = new PipelineNestedStack(
-      this,
-      'PipelineNestedStack',
-      {}
-    )
+    const cognitoStack = new CognitoNestedStack(this, 'CognitoNestedStack', {
+      userPoolName: 'iyiye-up',
+      userPoolClientName: 'iyiye-up-cl',
+      defaultUserPoolGroupName: 'iyiye-default-ug',
+      adminUserPoolGroupName: 'iyiye-admin-ug',
+      identityPoolName: 'iyiye-ip',
+      userFilesBucketArn: storageStack.userFilesBucket.bucketArn
+    })
 
-    const cognitoStack = new CognitoNestedStack(
-      this,
-      'CognitoNestedStack',
-      {
-        userPoolName: 'iyiye-up',
-        userPoolClientName: 'iyiye-up-cl',
-        defaultUserPoolGroupName: 'iyiye-default-ug',
-        adminUserPoolGroupName: 'iyiye-admin-ug',
-        identityPoolName: 'iyiye-ip',
-        userFilesBucketArn: storageStack.userFilesBucket.bucketArn
-      }
-    )
+    // TODO: Add Oauth Token Secret ARN
+    const pipelineStack = new PipelineNestedStack(this, 'PipelineNestedStack', {
+      getCognitoUserFunctionName: 'iyiye-prod-get-cognito-user',
+      cognitoUserPoolId: cognitoStack.userPool.userPoolId,
+      getCognitoUserFunctionRepoOwnerName: 'gimmickless',
+      getCognitoUserFunctionRepoName: 'get-cognito-user-function',
+      githubOauthTokenSecretArn: '',
+      artifactStoreBucketName: storageStack.pipelineArtifactStoreBucket.bucketName
+    })
+
+    
 
     const appsyncStack = new AppsyncNestedStack(
       this,

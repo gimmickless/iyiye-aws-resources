@@ -1,28 +1,44 @@
-import { Bucket, HttpMethods } from '@aws-cdk/aws-s3'
+import { Bucket, BucketAccessControl, HttpMethods } from '@aws-cdk/aws-s3'
 import {
   Construct,
   NestedStack,
-  NestedStackProps
+  NestedStackProps,
+  RemovalPolicy
 } from '@aws-cdk/core'
 
 interface StorageNestedStackProps extends NestedStackProps {
   userFilesBucketName: string
   metaFilesBucketName: string
+  pipelineArtifactStoreBucketName: string
 }
 
 export class StorageNestedStack extends NestedStack {
   // Properties
   metaFilesBucket: Bucket
   userFilesBucket: Bucket
+  pipelineArtifactStoreBucket: Bucket
 
   // Constructor
-  constructor(scope: Construct, id: string, props?: StorageNestedStackProps) {
+  constructor(scope: Construct, id: string, props: StorageNestedStackProps) {
     super(scope, id, props)
 
     //
+
+    this.pipelineArtifactStoreBucket = new Bucket(
+      this,
+      'PipelineArtifactStoreBucket',
+      {
+        bucketName: props.pipelineArtifactStoreBucketName,
+        accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
+        removalPolicy: RemovalPolicy.RETAIN,
+        versioned: true
+      }
+    )
+
     this.metaFilesBucket = new Bucket(this, 'MetaFilesBucket', {
-      bucketName: props?.metaFilesBucketName,
+      bucketName: props.metaFilesBucketName,
       publicReadAccess: true,
+      removalPolicy: RemovalPolicy.RETAIN,
       cors: [
         {
           allowedOrigins: ['*'],
@@ -32,7 +48,8 @@ export class StorageNestedStack extends NestedStack {
     })
 
     this.userFilesBucket = new Bucket(this, 'UserFilesBucket', {
-      bucketName: props?.userFilesBucketName,
+      bucketName: props.userFilesBucketName,
+      removalPolicy: RemovalPolicy.RETAIN,
       cors: [
         {
           allowedOrigins: ['*'],

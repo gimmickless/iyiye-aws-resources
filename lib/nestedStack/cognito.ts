@@ -33,12 +33,12 @@ export class CognitoNestedStack extends NestedStack {
   userPool: UserPool
 
   // Constructor
-  constructor(scope: Construct, id: string, props?: CognitoNestedStackProps) {
+  constructor(scope: Construct, id: string, props: CognitoNestedStackProps) {
     super(scope, id, props)
 
     // User Pool
     this.userPool = new UserPool(this, 'UserPool', {
-      userPoolName: props?.userPoolName,
+      userPoolName: props.userPoolName,
       accountRecovery: AccountRecovery.EMAIL_ONLY,
       autoVerify: {
         email: true
@@ -75,7 +75,7 @@ export class CognitoNestedStack extends NestedStack {
     })
 
     const userPoolClient = new UserPoolClient(this, 'UserPoolClient', {
-      userPoolClientName: props?.userPoolClientName,
+      userPoolClientName: props.userPoolClientName,
       generateSecret: false,
       userPool: this.userPool
     })
@@ -113,19 +113,19 @@ export class CognitoNestedStack extends NestedStack {
 
     new CfnUserPoolGroup(this, 'DefaultUserGroup', {
       userPoolId: this.userPool.userPoolId,
-      groupName: props?.defaultUserPoolGroupName,
+      groupName: props.defaultUserPoolGroupName,
       roleArn: defaultUserGroupRole.roleArn
     })
 
     new CfnUserPoolGroup(this, 'AdminUserGroup', {
       userPoolId: this.userPool.userPoolId,
-      groupName: props?.adminUserPoolGroupName,
+      groupName: props.adminUserPoolGroupName,
       roleArn: adminUserGroupRole.roleArn
     })
 
     // Identity Pools
     const identityPool = new CfnIdentityPool(this, 'IdentityPool', {
-      identityPoolName: props?.identityPoolName,
+      identityPoolName: props.identityPoolName,
       allowUnauthenticatedIdentities: true,
       cognitoIdentityProviders: [
         {
@@ -151,17 +151,17 @@ export class CognitoNestedStack extends NestedStack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:GetObject'],
-              resources: [`${props?.userFilesBucketArn}/protected/*`]
+              resources: [`${props.userFilesBucketArn}/protected/*`]
             }),
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:PutObject'],
-              resources: [`${props?.userFilesBucketArn}/uploads/*`]
+              resources: [`${props.userFilesBucketArn}/uploads/*`]
             }),
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:ListBucket'],
-              resources: [`${props?.userFilesBucketArn}`],
+              resources: [`${props.userFilesBucketArn}`],
               conditions: {
                 StringLike: {
                   's3:prefix': [
@@ -176,7 +176,7 @@ export class CognitoNestedStack extends NestedStack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
-              resources: [`${props?.userFilesBucketArn}/public/*`]
+              resources: [`${props.userFilesBucketArn}/public/*`]
             }),
             new PolicyStatement({
               effect: Effect.ALLOW,
@@ -215,17 +215,17 @@ export class CognitoNestedStack extends NestedStack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:GetObject'],
-              resources: [`${props?.userFilesBucketArn}/protected/*`]
+              resources: [`${props.userFilesBucketArn}/protected/*`]
             }),
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:PutObject'],
-              resources: [`${props?.userFilesBucketArn}/uploads/*`]
+              resources: [`${props.userFilesBucketArn}/uploads/*`]
             }),
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:ListBucket'],
-              resources: [`${props?.userFilesBucketArn}`],
+              resources: [`${props.userFilesBucketArn}`],
               conditions: {
                 StringLike: {
                   's3:prefix': [
@@ -243,10 +243,10 @@ export class CognitoNestedStack extends NestedStack {
               effect: Effect.ALLOW,
               actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
               resources: [
-                `${props?.userFilesBucketArn}/public/*`,
-                props?.userFilesBucketArn +
+                `${props.userFilesBucketArn}/public/*`,
+                props.userFilesBucketArn +
                   '/protected/${cognito-identity.amazonaws.com:sub}/*',
-                props?.userFilesBucketArn +
+                props.userFilesBucketArn +
                   '/private/${cognito-identity.amazonaws.com:sub}/*'
               ]
             }),
