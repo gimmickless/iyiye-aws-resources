@@ -1,9 +1,11 @@
 import {
   AccountRecovery,
+  BooleanAttribute,
   CfnIdentityPool,
   CfnIdentityPoolRoleAttachment,
   CfnUserPoolGroup,
   Mfa,
+  StringAttribute,
   UserPool,
   UserPoolClient
 } from '@aws-cdk/aws-cognito'
@@ -64,6 +66,11 @@ export class CognitoNestedStack extends NestedStack {
         locale: { required: false },
         lastUpdateTime: { required: false }
         // zoneInfo is not available in StandardAttribute interface
+      },
+      customAttributes: {
+        theme: new StringAttribute({ mutable: true, maxLen: 16 }),
+        bio: new StringAttribute({ mutable: true }),
+        contactable: new BooleanAttribute({ mutable: true })
       }
     })
 
