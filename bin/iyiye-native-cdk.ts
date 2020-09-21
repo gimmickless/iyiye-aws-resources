@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config.js'
 import 'source-map-support/register'
 import { App, Tags } from '@aws-cdk/core'
 import { IyiyeNativeCdkStack } from '../lib/iyiye-native-cdk-stack'
@@ -11,5 +12,5 @@ const theStack = new IyiyeNativeCdkStack(app, 'IyiyeNativeCdkStack', {
 })
 
 // Add a tag to all constructs in the stack
-Tags.of(theStack).add('environment', 'prod')
-Tags.of(theStack).add('application', 'iyiye')
+Tags.of(theStack).add('environment', process.env.ENVIRONMENT as string)
+Tags.of(theStack).add('application', process.env.APPLICATION as string)

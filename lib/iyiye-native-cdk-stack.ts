@@ -1,4 +1,6 @@
+import '../env'
 import { Construct, Stack, StackProps } from '@aws-cdk/core'
+import { Secret } from '@aws-cdk/aws-secretsmanager'
 import { AppsyncNestedStack } from './nestedStack/appsync'
 import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
@@ -9,6 +11,15 @@ import { StorageNestedStack } from './nestedStack/storage'
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
+
+    // Secrets Manager
+    const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({
+          token: process.env.GH_OAUTH_TOKEN_SECRET
+        })
+      }
+    })
 
     // Nested stacks
     const iamStack = new IamNestedStack(this, 'IamNestedStack', {})
@@ -40,7 +51,7 @@ export class IyiyeNativeCdkStack extends Stack {
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       getCognitoUserFunctionRepoOwnerName: 'gimmickless',
       getCognitoUserFunctionRepoName: 'get-cognito-user-function',
-      githubOauthTokenSecretArn: '',
+      githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
       artifactStoreBucketName: storageStack.pipelineArtifactStoreBucket.bucketName
     })
 

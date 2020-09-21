@@ -1,9 +1,7 @@
 import {
   BuildSpec,
   LinuxBuildImage,
-  PipelineProject,
-  Project,
-  Source
+  PipelineProject
 } from '@aws-cdk/aws-codebuild'
 import { Artifact, Pipeline } from '@aws-cdk/aws-codepipeline'
 import {
@@ -91,12 +89,11 @@ export class PipelineNestedStack extends NestedStack {
               templatePath: getCognitoUserFunctionBuildOutput.atPath(
                 'output-template.yml'
               ),
-
               parameterOverrides: {
                 FunctionName: props.getCognitoUserFunctionName,
                 CognitoUserPoolId: props.cognitoUserPoolId,
-                Environment: 'prod',
-                Application: 'iyiye'
+                Environment: process.env.ENVIRONMENT as string,
+                Application: process.env.APPLICATION as string
               },
               extraInputs: [getCognitoUserFunctionBuildOutput]
             })
