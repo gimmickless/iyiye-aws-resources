@@ -61,7 +61,9 @@ export class PipelineNestedStack extends NestedStack {
               owner: props.getCognitoUserFunctionRepoOwnerName,
               repo: props.getCognitoUserFunctionRepoName,
               oauthToken: SecretValue.secretsManager(
-                props.githubOauthTokenSecretArn
+                props.githubOauthTokenSecretArn, {
+                  jsonField: 'token'
+                }
               ),
               trigger: GitHubTrigger.WEBHOOK,
               output: getCognitoUserFunctionSourceOutput
