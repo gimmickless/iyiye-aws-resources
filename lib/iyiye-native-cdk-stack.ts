@@ -4,7 +4,6 @@ import { Secret } from '@aws-cdk/aws-secretsmanager'
 import { AppsyncNestedStack } from './nestedStack/appsync'
 import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
-import { IamNestedStack } from './nestedStack/iam'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
 
@@ -22,8 +21,6 @@ export class IyiyeNativeCdkStack extends Stack {
     })
 
     // Nested stacks
-    const iamStack = new IamNestedStack(this, 'IamNestedStack', {})
-
     const dataStack = new DataNestedStack(this, 'DataNestedStack', {})
 
     const storageStack = new StorageNestedStack(
@@ -57,10 +54,10 @@ export class IyiyeNativeCdkStack extends Stack {
 
     
 
-    const appsyncStack = new AppsyncNestedStack(
-      this,
-      'AppsyncNestedStack',
-      {}
-    )
+    const appsyncStack = new AppsyncNestedStack(this, 'AppsyncNestedStack', {
+      appsyncApiName: 'iyiye-prod-appsync-api',
+      cognitoUserPoolId: cognitoStack.userPool.userPoolId,
+      getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-prod-get-cognito-user`
+    })
   }
 }
