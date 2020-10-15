@@ -6,6 +6,7 @@ import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
+import { auroraMajorVersion , auroraFullVersion} from './constants'
 
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -21,7 +22,11 @@ export class IyiyeNativeCdkStack extends Stack {
     })
 
     // Nested stacks
-    const dataStack = new DataNestedStack(this, 'DataNestedStack', {})
+    const dataStack = new DataNestedStack(this, 'DataNestedStack', {
+      auroraMajorVersion,
+      auroraFullVersion,
+      shoppingCartTable: `iyiye_${process.env.ENVIRONMENT}_shopping_cart`
+    })
 
     const storageStack = new StorageNestedStack(
       this,
@@ -44,12 +49,13 @@ export class IyiyeNativeCdkStack extends Stack {
 
     // TODO: Add Oauth Token Secret ARN
     const pipelineStack = new PipelineNestedStack(this, 'PipelineNestedStack', {
-      getCognitoUserFunctionName: 'iyiye-prod-get-cognito-user',
+      getCognitoUserFunctionName: `iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       getCognitoUserFunctionRepoOwnerName: 'gimmickless',
       getCognitoUserFunctionRepoName: 'get-cognito-user-function',
       githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
-      artifactStoreBucketName: storageStack.pipelineArtifactStoreBucket.bucketName
+      artifactStoreBucketName:
+        storageStack.pipelineArtifactStoreBucket.bucketName
     })
 
     
@@ -57,7 +63,7 @@ export class IyiyeNativeCdkStack extends Stack {
     const appsyncStack = new AppsyncNestedStack(this, 'AppsyncNestedStack', {
       appsyncApiName: 'iyiye-prod-appsync-api',
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-      getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-prod-get-cognito-user`
+      getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`
     })
   }
 }
