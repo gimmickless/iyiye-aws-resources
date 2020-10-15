@@ -1,8 +1,6 @@
 import { Table as DynamoDbTable, AttributeType } from '@aws-cdk/aws-dynamodb'
 import {
-  DatabaseCluster as RdsDatabaseCluster,
-  DatabaseClusterEngine as RdsDatabaseClusterEngine,
-  AuroraEngineVersion
+  CfnDBCluster as RdsCfnDBCluster
 } from '@aws-cdk/aws-rds'
 import {
   Construct,
@@ -21,25 +19,29 @@ export class DataNestedStack extends NestedStack {
   // Properties
   // productTable: DynamoDbTable
   shoppingCartTable: DynamoDbTable
-  databaseCluster: RdsDatabaseCluster
+  databaseCluster: RdsCfnDBCluster
 
   constructor(scope: Construct, id: string, props: DataNestedStackProps) {
     super(scope, id, props)
 
-    const databaseCluster = new RdsDatabaseCluster(this, 'RdsDatabase', {
-      engine: RdsDatabaseClusterEngine.aurora({
-        version: {
-          auroraMajorVersion: props.auroraMajorVersion,
-          auroraFullVersion: props.auroraFullVersion
-        }
-      }),
-      instanceProps: {},
-      clusterIdentifier: "",
-      defaultDatabaseName: "",
-      deletionProtection: false
+    this.databaseCluster = new RdsCfnDBCluster(this, 'RdsDatabase', {
+      engine: 'aurora',
+      engineMode: 'serverless',
+      engineVersion: props.auroraFullVersion,
+      dbClusterIdentifier: '',
+      databaseName: '',
+      deletionProtection: false,
+      enableHttpEndpoint: true,
+      backupRetentionPeriod: 7,
+      scalingConfiguration: {
+        autoPause: true,
+        minCapacity: 1,
+        maxCapacity: 2,
+        secondsUntilAutoPause: 300
+      }
     })
 
-    // Products (DynamoDB)
+    // Shopping Cart (DynamoDB)
     this.shoppingCartTable = new DynamoDbTable(this, 'ShoppingCartTable', {
       tableName: props.shoppingCartTable,
       partitionKey: { name: 'id', type: AttributeType.STRING },
