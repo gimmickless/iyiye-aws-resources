@@ -1,6 +1,7 @@
 import { Table as DynamoDbTable, AttributeType } from '@aws-cdk/aws-dynamodb'
 import {
-  CfnDBCluster as RdsCfnDBCluster
+  CfnDBCluster as RdsCfnDBCluster,
+  DatabaseSecret
 } from '@aws-cdk/aws-rds'
 import {
   Construct,
@@ -24,6 +25,10 @@ export class DataNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: DataNestedStackProps) {
     super(scope, id, props)
 
+    const dbSecret = new DatabaseSecret(this, 'AuroraSecret', {
+      username: 'root'
+    })
+
     this.databaseCluster = new RdsCfnDBCluster(this, 'RdsDatabase', {
       engine: 'aurora',
       engineMode: 'serverless',
@@ -33,6 +38,8 @@ export class DataNestedStack extends NestedStack {
       deletionProtection: false,
       enableHttpEndpoint: true,
       backupRetentionPeriod: 7,
+      masterUsername: dbSecret.secretValueFromJson('username').toString(),
+      masterUserPassword: dbSecret.secretValueFromJson('password').toString(),
       scalingConfiguration: {
         autoPause: true,
         minCapacity: 1,
