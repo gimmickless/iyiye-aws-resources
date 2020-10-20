@@ -1,6 +1,7 @@
 import { Table as DynamoDbTable, AttributeType } from '@aws-cdk/aws-dynamodb'
 import {
   CfnDBCluster as RdsCfnDBCluster,
+  CfnDBSubnetGroup,
   DatabaseSecret
 } from '@aws-cdk/aws-rds'
 import {
@@ -11,8 +12,12 @@ import {
 } from '@aws-cdk/core'
 
 interface DataNestedStackProps extends NestedStackProps {
-  auroraMajorVersion: string,
-  auroraFullVersion: string,
+  rdsSubnetIds: Array<string>
+  rdsVpcSecurityGroupIds: Array<string>
+  auroraMajorVersion?: string
+  auroraFullVersion: string
+  rdsDbClusterIdentifier: string
+  rdsDatabaseName: string
   shoppingCartTable: string
 }
 
@@ -30,16 +35,21 @@ export class DataNestedStack extends NestedStack {
     })
 
     this.databaseCluster = new RdsCfnDBCluster(this, 'RdsDatabase', {
+      dbClusterIdentifier: props.rdsDbClusterIdentifier,
+      databaseName: props.rdsDatabaseName,
       engine: 'aurora',
       engineMode: 'serverless',
       engineVersion: props.auroraFullVersion,
-      dbClusterIdentifier: '',
-      databaseName: '',
       deletionProtection: false,
       enableHttpEndpoint: true,
       backupRetentionPeriod: 7,
       masterUsername: dbSecret.secretValueFromJson('username').toString(),
       masterUserPassword: dbSecret.secretValueFromJson('password').toString(),
+      vpcSecurityGroupIds: props.rdsVpcSecurityGroupIds,
+      dbSubnetGroupName: new CfnDBSubnetGroup(this, 'RdsSubnetGroup', {
+        dbSubnetGroupDescription: 'RdsSubnetGroup',
+        subnetIds: props.rdsSubnetIds
+      }).ref,
       scalingConfiguration: {
         autoPause: true,
         minCapacity: 1,

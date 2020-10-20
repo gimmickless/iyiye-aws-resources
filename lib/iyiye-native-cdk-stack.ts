@@ -1,6 +1,8 @@
 import '../env'
 import { Construct, Stack, StackProps } from '@aws-cdk/core'
+import { SubnetType } from '@aws-cdk/aws-ec2'
 import { Secret } from '@aws-cdk/aws-secretsmanager'
+import { Ec2NestedStack } from './nestedStack/ec2'
 import { AppsyncNestedStack } from './nestedStack/appsync'
 import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
@@ -22,8 +24,16 @@ export class IyiyeNativeCdkStack extends Stack {
     })
 
     // Nested stacks
+    const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {
+    })
+
     const dataStack = new DataNestedStack(this, 'DataNestedStack', {
-      auroraMajorVersion,
+      rdsSubnetIds: ec2Stack.vpc.selectSubnets({
+        subnetType: SubnetType.PRIVATE
+      }).subnetIds,
+      rdsVpcSecurityGroupIds: [ec2Stack.rdsSecurityGroup.securityGroupId],
+      rdsDbClusterIdentifier: 'iyiye-rds-cluster-1',
+      rdsDatabaseName: `iyiye_${process.env.ENVIRONMENT}_db`,
       auroraFullVersion,
       shoppingCartTable: `iyiye_${process.env.ENVIRONMENT}_shopping_cart`
     })
@@ -50,12 +60,14 @@ export class IyiyeNativeCdkStack extends Stack {
     // TODO: Add Oauth Token Secret ARN
     const pipelineStack = new PipelineNestedStack(this, 'PipelineNestedStack', {
       getCognitoUserFunctionName: `iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
+      rdsBootstrapFunctionName: `iyiye-${process.env.ENVIRONMENT}-rds-bootstrap`,
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-      getCognitoUserFunctionRepoOwnerName: 'gimmickless',
-      getCognitoUserFunctionRepoName: 'get-cognito-user-function',
       githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
       artifactStoreBucketName:
-        storageStack.pipelineArtifactStoreBucket.bucketName
+        storageStack.pipelineArtifactStoreBucket.bucketName,
+      githubFunctionReposOwnerName: 'gimmickless',
+      getCognitoUserFunctionRepoName: 'get-cognito-user-function',
+      rdsBootstrapFunctionRepoName: 'rds-bootstrap-function'
     })
 
     
