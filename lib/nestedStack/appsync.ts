@@ -4,7 +4,7 @@ import {
   GraphqlApi,
   AuthorizationType,
   Schema,
-  FieldLogLevel, MappingTemplate
+  FieldLogLevel, MappingTemplate, CfnDataSource
 } from '@aws-cdk/aws-appsync'
 import { UserPool } from '@aws-cdk/aws-cognito'
 import { Function } from '@aws-cdk/aws-lambda'
@@ -49,6 +49,17 @@ export class AppsyncNestedStack extends NestedStack {
         props.getCognitoUserFunctionArn
       )
     )
+
+    // TODO: Add as api.addRelationalDataSource instead when https://github.com/gimmickless/iyiye-aws-resources/issues/7 is resolved
+    new CfnDataSource(this, 'RdsDataSource', {
+      apiId: api.apiId,
+      name: 'rds',
+      type: 'RELATIONAL_DATABASE',
+      relationalDatabaseConfig: {
+        relationalDatabaseSourceType: ''
+        // rdsHttpEndpointConfig: {}
+      }
+    })
 
     // Resolvers
     getCognitoUserFunctionDS.createResolver({

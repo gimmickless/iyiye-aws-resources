@@ -78,8 +78,6 @@ export class IyiyeNativeCdkStack extends Stack {
       rdsDbKitIngredientTableName: 'KitIngredients'
     })
 
-    
-
     new AppsyncNestedStack(this, 'AppsyncNestedStack', {
       appsyncApiName: 'iyiye-prod-appsync-api',
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
