@@ -8,11 +8,13 @@ import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
-import { auroraMajorVersion , auroraFullVersion} from './constants'
+import { auroraFullVersion} from './constants'
 
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
+
+    const rdsDatabaseName = `iyiye_${process.env.ENVIRONMENT}_db`
 
     // Secrets Manager
     const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
@@ -33,7 +35,7 @@ export class IyiyeNativeCdkStack extends Stack {
       }).subnetIds,
       rdsVpcSecurityGroupIds: [ec2Stack.rdsSecurityGroup.securityGroupId],
       rdsDbClusterIdentifier: 'iyiye-rds-cluster-1',
-      rdsDatabaseName: `iyiye_${process.env.ENVIRONMENT}_db`,
+      rdsDatabaseName,
       auroraFullVersion,
       shoppingCartTable: `iyiye_${process.env.ENVIRONMENT}_shopping_cart`
     })
@@ -67,12 +69,18 @@ export class IyiyeNativeCdkStack extends Stack {
         storageStack.pipelineArtifactStoreBucket.bucketName,
       githubFunctionReposOwnerName: 'gimmickless',
       getCognitoUserFunctionRepoName: 'get-cognito-user-function',
-      rdsBootstrapFunctionRepoName: 'rds-bootstrap-function'
+      rdsBootstrapFunctionRepoName: 'rds-bootstrap-function',
+      rdsDbName: rdsDatabaseName,
+      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.ref}`,
+      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
+      rdsDbIngredientTableName: 'Ingredients',
+      rdsDbKitTableName: 'Kits',
+      rdsDbKitIngredientTableName: 'KitIngredients'
     })
 
     
 
-    const appsyncStack = new AppsyncNestedStack(this, 'AppsyncNestedStack', {
+    new AppsyncNestedStack(this, 'AppsyncNestedStack', {
       appsyncApiName: 'iyiye-prod-appsync-api',
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`

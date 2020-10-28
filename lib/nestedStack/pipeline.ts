@@ -28,6 +28,12 @@ interface PipelineNestedStackProps extends NestedStackProps {
   githubFunctionReposOwnerName: string
   getCognitoUserFunctionRepoName: string
   rdsBootstrapFunctionRepoName: string
+  rdsDbName: string
+  rdsDbClusterArn: string
+  rdsDbCredentialsSecretArn: string
+  rdsDbIngredientTableName: string
+  rdsDbKitTableName: string
+  rdsDbKitIngredientTableName: string
 }
 
 export class PipelineNestedStack extends NestedStack {
@@ -166,8 +172,12 @@ export class PipelineNestedStack extends NestedStack {
               ),
               parameterOverrides: {
                 FunctionName: props.rdsBootstrapFunctionName,
-                // TODO: Add relevant props
-                // CognitoUserPoolId: props.cognitoUserPoolId,
+                DbName: props.rdsDbName,
+                DbClusterArn: props.rdsDbClusterArn,
+                CredSecret: props.rdsDbCredentialsSecretArn,
+                IngrTbl: props.rdsDbIngredientTableName,
+                KitTbl: props.rdsDbKitTableName,
+                KitIngrTbl: props.rdsDbKitIngredientTableName,
                 Environment: process.env.ENVIRONMENT as string,
                 Application: process.env.APPLICATION as string
               },

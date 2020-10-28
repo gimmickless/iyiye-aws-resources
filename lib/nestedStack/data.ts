@@ -24,13 +24,14 @@ interface DataNestedStackProps extends NestedStackProps {
 export class DataNestedStack extends NestedStack {
   // Properties
   // productTable: DynamoDbTable
+  dbSecret: DatabaseSecret
   shoppingCartTable: DynamoDbTable
   databaseCluster: RdsCfnDBCluster
 
   constructor(scope: Construct, id: string, props: DataNestedStackProps) {
     super(scope, id, props)
 
-    const dbSecret = new DatabaseSecret(this, 'AuroraSecret', {
+    this.dbSecret = new DatabaseSecret(this, 'AuroraSecret', {
       username: 'root'
     })
 
@@ -43,8 +44,8 @@ export class DataNestedStack extends NestedStack {
       deletionProtection: false,
       enableHttpEndpoint: true,
       backupRetentionPeriod: 7,
-      masterUsername: dbSecret.secretValueFromJson('username').toString(),
-      masterUserPassword: dbSecret.secretValueFromJson('password').toString(),
+      masterUsername: this.dbSecret.secretValueFromJson('username').toString(),
+      masterUserPassword: this.dbSecret.secretValueFromJson('password').toString(),
       vpcSecurityGroupIds: props.rdsVpcSecurityGroupIds,
       dbSubnetGroupName: new CfnDBSubnetGroup(this, 'RdsSubnetGroup', {
         dbSubnetGroupDescription: 'RdsSubnetGroup',
