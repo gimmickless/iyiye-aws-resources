@@ -4,7 +4,10 @@ import {
   GraphqlApi,
   AuthorizationType,
   Schema,
-  FieldLogLevel, MappingTemplate, CfnDataSource
+  FieldLogLevel,
+  MappingTemplate,
+  CfnDataSource,
+  CfnResolver
 } from '@aws-cdk/aws-appsync'
 import { UserPool } from '@aws-cdk/aws-cognito'
 import { Function } from '@aws-cdk/aws-lambda'
@@ -13,7 +16,20 @@ interface AppsyncNestedStackProps extends NestedStackProps {
   appsyncApiName: string
   cognitoUserPoolId: string
   getCognitoUserFunctionArn: string
+  rdsDbName: string
+  rdsDbClusterArn: string
+  rdsDbCredentialsSecretArn: string
+  rdsDbIngredientTableName: string
+  rdsDbKitTableName: string
+  rdsDbKitIngredientTableName: string
 }
+
+const rdsListResponseMappingTemplate = `
+#if($ctx.error)
+  $utils.error($ctx.error.message, $ctx.error.type)
+#end
+$utils.toJson($utils.rds.toJsonObject($ctx.result)[0])
+`
 
 export class AppsyncNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: AppsyncNestedStackProps) {
@@ -50,23 +66,54 @@ export class AppsyncNestedStack extends NestedStack {
       )
     )
 
-    // TODO: Add as api.addRelationalDataSource instead when https://github.com/gimmickless/iyiye-aws-resources/issues/7 is resolved
-    new CfnDataSource(this, 'RdsDataSource', {
+    /*
+     * TODO: Add as api.addRelationalDataSource instead...
+     * ... when https://github.com/gimmickless/iyiye-aws-resources/issues/7 is resolved
+     */
+    const rdsDS = new CfnDataSource(this, 'RdsDataSource', {
       apiId: api.apiId,
       name: 'rds',
       type: 'RELATIONAL_DATABASE',
       relationalDatabaseConfig: {
-        relationalDatabaseSourceType: ''
-        // rdsHttpEndpointConfig: {}
+        relationalDatabaseSourceType: 'RDS_HTTP_ENDPOINT',
+        rdsHttpEndpointConfig: {
+          awsRegion: this.region,
+          awsSecretStoreArn: props.rdsDbCredentialsSecretArn,
+          dbClusterIdentifier: props.rdsDbClusterArn,
+          databaseName: props.rdsDbName
+        }
       }
     })
 
-    // Resolvers
+    // Function Resolvers
     getCognitoUserFunctionDS.createResolver({
       typeName: 'Query',
       fieldName: 'getUserByUsername',
       requestMappingTemplate: MappingTemplate.lambdaRequest(),
       responseMappingTemplate: MappingTemplate.lambdaResult()
+    })
+
+    // Cfn Resolvers (for RDS)
+    new CfnResolver(this, 'ListKitsResolver', {
+      apiId: api.apiId,
+      typeName: 'Query',
+      fieldName: 'listKits',
+      dataSourceName: rdsDS.name,
+      requestMappingTemplate: `
+      {
+        "version": "2018-05-29",
+        "statements": [
+          "Select * from ${props.rdsDbKitTableName} Where (:contentId='' Or contentId=:contentId) And (:contentType='' Or contentType=:contentType) Order By time Desc Limit :limit Offset :offset"
+        ],
+        "variableMap": {
+          ":limit": $util.defaultIfNull(\${ctx.args.limit}, 10),
+          ":offset": $util.defaultIfNull(\${ctx.args.offset}, 0),
+          ":contentId": "$util.defaultIfNullOrEmpty($ctx.args.contentId, '')",
+          ":contentType": "$util.defaultIfNullOrEmpty($ctx.args.contentType, '')"
+        }
+      }
+      `,
+      responseMappingTemplate: rdsListResponseMappingTemplate
     })
   }
 }

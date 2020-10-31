@@ -15,6 +15,9 @@ export class IyiyeNativeCdkStack extends Stack {
     super(scope, id, props)
 
     const rdsDatabaseName = `iyiye_${process.env.ENVIRONMENT}_db`
+    const rdsDbIngredientTableName =  'Ingredients'
+    const rdsDbKitTableName = 'Kits'
+    const rdsDbKitIngredientTableName = 'KitIngredients'
 
     // Secrets Manager
     const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
@@ -73,15 +76,21 @@ export class IyiyeNativeCdkStack extends Stack {
       rdsDbName: rdsDatabaseName,
       rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.ref}`,
       rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
-      rdsDbIngredientTableName: 'Ingredients',
-      rdsDbKitTableName: 'Kits',
-      rdsDbKitIngredientTableName: 'KitIngredients'
+      rdsDbIngredientTableName,
+      rdsDbKitTableName,
+      rdsDbKitIngredientTableName
     })
 
     new AppsyncNestedStack(this, 'AppsyncNestedStack', {
       appsyncApiName: 'iyiye-prod-appsync-api',
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-      getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`
+      getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
+      rdsDbName: rdsDatabaseName,
+      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.ref}`,
+      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
+      rdsDbIngredientTableName,
+      rdsDbKitTableName,
+      rdsDbKitIngredientTableName
     })
   }
 }
