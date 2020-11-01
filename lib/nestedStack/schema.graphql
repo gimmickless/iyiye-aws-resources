@@ -1,10 +1,20 @@
 ## TODO: Populate this
 # Q U E R I E S
-type Query @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+type Query @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
   # User
   getUserByUsername(username: String!): User
   # Kit
-  listKits(): [Kit]
+  listKits(
+    orderColumn: KitOrderColumn 
+    sqlOrderDirection: SQLOrderDirection
+    cuisineCountryCode: String
+    diets: String # Or [String] ?
+    priceUpperLimit: Float
+    calorieUpperLimit: Number
+    prepTimeUpperLimit: String
+    limit: Int
+    offset: Int
+  ): [Kit]
 }
 
 # M U T A T I O N S
@@ -20,9 +30,41 @@ type Subscription @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) 
 # I N P U T
 
 # T Y P E S
-type User @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+type User @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
   username: String!
   picture: String
   bio: String
   contactable: Boolean
+}
+
+type Kit @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  id: ID!
+  name: String!
+  version: String!
+  description: String
+  authorId: ID
+  author: User
+  createTime: AWSTimestamp!
+  lastUpdateTime: AWSTimestamp!
+  cuisineCountryCode: String
+  diets: String # Comma-separated list
+  recipe: String!
+  price: Float!
+  calorie: Number
+  prepTime: String!
+}
+
+# E N U M S
+
+enum KitOrderColumn {
+  createTime
+  lastUpdateTime
+  price
+  calorie
+  prepTime
+}
+
+enum SQLOrderDirection {
+  ASC
+  DESC
 }

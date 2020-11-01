@@ -31,6 +31,8 @@ const rdsListResponseMappingTemplate = `
 $utils.toJson($utils.rds.toJsonObject($ctx.result)[0])
 `
 
+const rdsKitTableDefaultOrderColumn = 'lastUpdateTime'
+
 export class AppsyncNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: AppsyncNestedStackProps) {
     super(scope, id, props)
@@ -100,16 +102,32 @@ export class AppsyncNestedStack extends NestedStack {
       fieldName: 'listKits',
       dataSourceName: rdsDS.name,
       requestMappingTemplate: `
+      #set ($statement = "
+      Select * From
+        ${props.rdsDbKitTableName}
+      Where (:cuisineCountryCode='' Or cuisineCountryCode=:cuisineCountryCode)
+        And (:diets='' Or diets=:diets)
+        And (:priceUpperLimit=0 Or price<:priceUpperLimit)
+        And (:calorieUpperLimit=0 Or calorie<:calorieUpperLimit)
+        And (:prepTimeUpperLimit=0 Or prepTime<:prepTimeUpperLimit)
+      Order By :orderColumn :sqlOrderDirection Limit :limit Offset :offset
+      ")
+
       {
         "version": "2018-05-29",
         "statements": [
-          "Select * from ${props.rdsDbKitTableName} Where (:contentId='' Or contentId=:contentId) And (:contentType='' Or contentType=:contentType) Order By time Desc Limit :limit Offset :offset"
+          $util.toJson($statement)
         ],
         "variableMap": {
           ":limit": $util.defaultIfNull(\${ctx.args.limit}, 10),
           ":offset": $util.defaultIfNull(\${ctx.args.offset}, 0),
-          ":contentId": "$util.defaultIfNullOrEmpty($ctx.args.contentId, '')",
-          ":contentType": "$util.defaultIfNullOrEmpty($ctx.args.contentType, '')"
+          ":orderColumn": $util.defaultIfNullOrEmpty(\${ctx.args.orderColumn}, '${rdsKitTableDefaultOrderColumn}'),
+          ":sqlOrderDirection": $util.defaultIfNullOrEmpty(\${ctx.args.sqlOrderDirection}, 'ASC'),
+          ":cuisineCountryCode": "$util.defaultIfNullOrEmpty(\${ctx.args.cuisineCountryCode}, '')",
+          ":diets": "$util.defaultIfNullOrEmpty(\${ctx.args.diets}, '')",
+          ":priceUpperLimit": "$util.defaultIfNull(\${ctx.args.priceUpperLimit}, 0)",
+          ":calorieUpperLimit": "$util.defaultIfNull(\${ctx.args.calorieUpperLimit}, 0)",
+          ":prepTimeUpperLimit": "$util.defaultIfNull(\${ctx.args.prepTimeUpperLimit}, 0)"
         }
       }
       `,
