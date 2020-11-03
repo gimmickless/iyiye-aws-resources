@@ -33,23 +33,23 @@ $utils.toJson($utils.rds.toJsonObject($ctx.result)[0])
 
 const rdsFirstSingleItemMappingTemplate = `
 #if($ctx.error)
-    $utils.error($ctx.error.message, $ctx.error.type)
+  $utils.error($ctx.error.message, $ctx.error.type)
 #end
 #set($output = $utils.rds.toJsonObject($ctx.result)[0])
 #if ($output.isEmpty())
-null
+  null
 #else 
-$utils.toJson($output[0])
+  $utils.toJson($output[0])
 #end
 `
 
-const lambdaContextArgsRequestMappingTemplate = `
-{
-  "version" : "2018-05-29",
-  "operation": "Invoke",
-  "payload": $util.toJson($ctx.args)
-}
-`
+// const lambdaContextArgsRequestMappingTemplate = `
+// {
+//   "version" : "2018-05-29",
+//   "operation": "Invoke",
+//   "payload": $util.toJson($ctx.args)
+// }
+// `
 
 const lambdaSourceAuthorUsernameAsUsernameRequestMappingTemplate = `
 {
@@ -123,7 +123,9 @@ export class AppsyncNestedStack extends NestedStack {
     getCognitoUserFunctionDS.createResolver({
       typeName: 'Query',
       fieldName: 'getUserByUsername',
-      requestMappingTemplate: MappingTemplate.lambdaRequest(),
+      requestMappingTemplate: MappingTemplate.lambdaRequest(
+        "$util.toJson($ctx.args)"
+      ),
       responseMappingTemplate: MappingTemplate.lambdaResult()
     })
 
