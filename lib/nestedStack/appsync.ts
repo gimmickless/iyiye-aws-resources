@@ -95,7 +95,7 @@ export class AppsyncNestedStack extends NestedStack {
       responseMappingTemplate: MappingTemplate.lambdaResult()
     })
 
-    // Cfn Resolvers (for RDS)
+    // RDS Cfn Resolvers (Query)
     new CfnResolver(this, 'ListKitsResolver', {
       apiId: api.apiId,
       typeName: 'Query',
@@ -130,6 +130,17 @@ export class AppsyncNestedStack extends NestedStack {
           ":prepTimeUpperLimit": "$util.defaultIfNull(\${ctx.args.prepTimeUpperLimit}, 0)"
         }
       }
+      `,
+      responseMappingTemplate: rdsListResponseMappingTemplate
+    })
+
+    // RDS Cfn Resolvers (Source)
+    new CfnResolver(this, 'ListKitsResolver', {
+      apiId: api.apiId,
+      typeName: 'Query',
+      fieldName: 'listKits',
+      dataSourceName: rdsDS.name,
+      requestMappingTemplate: `
       `,
       responseMappingTemplate: rdsListResponseMappingTemplate
     })
