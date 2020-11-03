@@ -31,6 +31,38 @@ const rdsListResponseMappingTemplate = `
 $utils.toJson($utils.rds.toJsonObject($ctx.result)[0])
 `
 
+const rdsFirstSingleItemMappingTemplate = `
+#if($ctx.error)
+    $utils.error($ctx.error.message, $ctx.error.type)
+#end
+#set($output = $utils.rds.toJsonObject($ctx.result)[0])
+#if ($output.isEmpty())
+null
+#else 
+$utils.toJson($output[0])
+#end
+`
+
+const lambdaContextArgsRequestMappingTemplate = `
+{
+  "version" : "2018-05-29",
+  "operation": "Invoke",
+  "payload": $util.toJson($ctx.args)
+}
+`
+
+const lambdaSourceAuthorUsernameAsUsernameRequestMappingTemplate = `
+{
+  "version" : "2018-05-29",
+  "operation": "Invoke",
+  "payload": {
+    "username": $util.toJson($ctx.source.authorUsername)
+  }
+}
+`
+
+const lambdaRawResponseMappingTemplate = `$util.toJson($ctx.result)`
+
 const rdsKitTableDefaultOrderColumn = 'lastUpdateTime'
 
 export class AppsyncNestedStack extends NestedStack {
@@ -135,14 +167,13 @@ export class AppsyncNestedStack extends NestedStack {
     })
 
     // RDS Cfn Resolvers (Source)
-    new CfnResolver(this, 'ListKitsResolver', {
+    new CfnResolver(this, 'AuthorOfKitResolver', {
       apiId: api.apiId,
-      typeName: 'Query',
-      fieldName: 'listKits',
-      dataSourceName: rdsDS.name,
-      requestMappingTemplate: `
-      `,
-      responseMappingTemplate: rdsListResponseMappingTemplate
+      typeName: 'Kit',
+      fieldName: 'author',
+      dataSourceName: getCognitoUserFunctionDS.name,
+      requestMappingTemplate: lambdaSourceAuthorUsernameAsUsernameRequestMappingTemplate,
+      responseMappingTemplate: lambdaRawResponseMappingTemplate
     })
   }
 }

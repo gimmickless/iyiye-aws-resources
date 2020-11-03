@@ -42,7 +42,7 @@ type Kit @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) 
   name: String!
   version: String!
   description: String
-  authorId: ID
+  authorUsername: ID
   author: User
   createTime: AWSTimestamp!
   lastUpdateTime: AWSTimestamp!
