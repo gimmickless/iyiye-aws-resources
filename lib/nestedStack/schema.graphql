@@ -11,7 +11,7 @@ type Query @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]
     diets: String # Or [String] ?
     priceUpperLimit: Float
     calorieUpperLimit: Number
-    prepTimeUpperLimit: String
+    prepTimeUpperLimit: Number
     limit: Int
     offset: Int
   ): [Kit]
@@ -32,7 +32,7 @@ type Subscription @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) 
 # T Y P E S
 type User @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
   username: String!
-  picture: String
+  picture: AWSURL
   bio: String
   contactable: Boolean
 }
@@ -51,7 +51,7 @@ type Kit @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) 
   recipe: String!
   price: Float!
   calorie: Number
-  prepTime: String!
+  prepTime: Number! # Minutes
 }
 
 # E N U M S
