@@ -139,7 +139,8 @@ export class AppsyncNestedStack extends NestedStack {
       #set ($statement = "
       Select * From
         ${props.rdsDbKitTableName}
-      Where (:cuisineCountryCode='' Or cuisineCountryCode=:cuisineCountryCode)
+      Where (:approved Is NULL Or approved=:approved)
+        And (:cuisineCountryCode='' Or cuisineCountryCode=:cuisineCountryCode)
         And (:diets='' Or diets=:diets)
         And (:priceUpperLimit=0 Or price<:priceUpperLimit)
         And (:calorieUpperLimit=0 Or calorie<:calorieUpperLimit)
@@ -153,6 +154,7 @@ export class AppsyncNestedStack extends NestedStack {
           $util.toJson($statement)
         ],
         "variableMap": {
+          ":approved": $util.defaultIfNull(\${ctx.args.approved}, null),
           ":limit": $util.defaultIfNull(\${ctx.args.limit}, 10),
           ":offset": $util.defaultIfNull(\${ctx.args.offset}, 0),
           ":orderColumn": $util.defaultIfNullOrEmpty(\${ctx.args.orderColumn}, '${rdsKitTableDefaultOrderColumn}'),
