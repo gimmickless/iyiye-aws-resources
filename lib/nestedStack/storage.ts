@@ -14,9 +14,9 @@ interface StorageNestedStackProps extends NestedStackProps {
 
 export class StorageNestedStack extends NestedStack {
   // Properties
-  metaFilesBucket: Bucket
-  userFilesBucket: Bucket
-  pipelineArtifactStoreBucket: Bucket
+  readonly metaFilesBucket: Bucket
+  readonly userFilesBucket: Bucket
+  readonly pipelineArtifactStoreBucket: Bucket
 
   // Constructor
   constructor(scope: Construct, id: string, props: StorageNestedStackProps) {

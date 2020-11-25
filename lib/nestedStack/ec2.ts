@@ -11,8 +11,8 @@ interface Ec2NestedStackProps extends NestedStackProps {
 
 export class Ec2NestedStack extends NestedStack {
   // Properties
-  vpc: Vpc
-  rdsSecurityGroup: SecurityGroup
+  readonly vpc: Vpc
+  readonly rdsSecurityGroup: SecurityGroup
 
   // Constructor
   constructor(scope: Construct, id: string, props: Ec2NestedStackProps) {
@@ -45,6 +45,5 @@ export class Ec2NestedStack extends NestedStack {
       vpc: this.vpc,
       allowAllOutbound: true
     })
-
   }
 }

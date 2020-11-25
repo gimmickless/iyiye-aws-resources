@@ -30,7 +30,7 @@ interface CognitoNestedStackProps extends NestedStackProps {
 
 export class CognitoNestedStack extends NestedStack {
   // Properties
-  userPool: UserPool
+  readonly userPool: UserPool
 
   // Constructor
   constructor(scope: Construct, id: string, props: CognitoNestedStackProps) {
