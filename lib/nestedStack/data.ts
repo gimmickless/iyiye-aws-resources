@@ -1,21 +1,23 @@
 import { Table as DynamoDbTable, AttributeType } from '@aws-cdk/aws-dynamodb'
+import { IVpc, SecurityGroup, SelectedSubnets } from '@aws-cdk/aws-ec2'
 import {
-  CfnDBCluster as RdsCfnDBCluster,
-  CfnDBSubnetGroup,
-  DatabaseSecret
+  ServerlessCluster as RdsDBCluster,
+  Credentials,
+  DatabaseSecret,
+  DatabaseClusterEngine
 } from '@aws-cdk/aws-rds'
 import {
   Construct,
+  Duration,
   NestedStack,
   NestedStackProps,
   Tags
 } from '@aws-cdk/core'
 
 interface DataNestedStackProps extends NestedStackProps {
-  rdsSubnetIds: Array<string>
-  rdsVpcSecurityGroupIds: Array<string>
-  auroraMajorVersion?: string
-  auroraFullVersion: string
+  rdsVpc: IVpc
+  rdsSubnets: SelectedSubnets
+  rdsVpcSecurityGroups: Array<SecurityGroup>
   rdsDbClusterIdentifier: string
   rdsDatabaseName: string
   shoppingCartTable: string
@@ -26,7 +28,7 @@ export class DataNestedStack extends NestedStack {
   // productTable: DynamoDbTable
   readonly dbSecret: DatabaseSecret
   readonly shoppingCartTable: DynamoDbTable
-  readonly databaseCluster: RdsCfnDBCluster
+  readonly databaseCluster: RdsDBCluster
 
   constructor(scope: Construct, id: string, props: DataNestedStackProps) {
     super(scope, id, props)
@@ -35,29 +37,21 @@ export class DataNestedStack extends NestedStack {
       username: 'root'
     })
 
-    this.databaseCluster = new RdsCfnDBCluster(this, 'RdsDatabase', {
-      dbClusterIdentifier: props.rdsDbClusterIdentifier,
-      databaseName: props.rdsDatabaseName,
-      engine: 'aurora',
-      engineMode: 'serverless',
-      engineVersion: props.auroraFullVersion,
+    this.databaseCluster = new RdsDBCluster(this, 'RdsDatabase', {
+      engine: DatabaseClusterEngine.AURORA,
+      vpc: props.rdsVpc,
+      clusterIdentifier: props.rdsDbClusterIdentifier,
+      defaultDatabaseName: props.rdsDatabaseName,
       deletionProtection: false,
-      enableHttpEndpoint: true,
-      backupRetentionPeriod: 7,
-      masterUsername: this.dbSecret.secretValueFromJson('username').toString(),
-      masterUserPassword: this.dbSecret
-        .secretValueFromJson('password')
-        .toString(),
-      vpcSecurityGroupIds: props.rdsVpcSecurityGroupIds,
-      dbSubnetGroupName: new CfnDBSubnetGroup(this, 'RdsSubnetGroup', {
-        dbSubnetGroupDescription: 'RdsSubnetGroup',
-        subnetIds: props.rdsSubnetIds
-      }).ref,
-      scalingConfiguration: {
-        autoPause: true,
+      enableDataApi: true,
+      backupRetention: Duration.days(7),
+      credentials: Credentials.fromSecret(this.dbSecret),
+      securityGroups: props.rdsVpcSecurityGroups,
+      vpcSubnets: props.rdsSubnets,
+      scaling: {
+        autoPause: Duration.minutes(5),
         minCapacity: 1,
-        maxCapacity: 2,
-        secondsUntilAutoPause: 300
+        maxCapacity: 2
       }
     })
 

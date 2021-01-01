@@ -8,14 +8,13 @@ import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
-import { auroraFullVersion} from './constants'
 
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
     const rdsDatabaseName = `iyiye_${process.env.ENVIRONMENT}_db`
-    const rdsDbIngredientTableName =  'Ingredients'
+    const rdsDbIngredientTableName = 'Ingredients'
     const rdsDbKitTableName = 'Kits'
     const rdsDbKitIngredientTableName = 'KitIngredients'
 
@@ -29,29 +28,24 @@ export class IyiyeNativeCdkStack extends Stack {
     })
 
     // Nested stacks
-    const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {
-    })
+    const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {})
 
     const dataStack = new DataNestedStack(this, 'DataNestedStack', {
-      rdsSubnetIds: ec2Stack.vpc.selectSubnets({
+      rdsVpc: ec2Stack.vpc,
+      rdsSubnets: ec2Stack.vpc.selectSubnets({
         subnetType: SubnetType.PRIVATE
-      }).subnetIds,
-      rdsVpcSecurityGroupIds: [ec2Stack.rdsSecurityGroup.securityGroupId],
+      }),
+      rdsVpcSecurityGroups: [ec2Stack.rdsSecurityGroup],
       rdsDbClusterIdentifier: 'iyiye-rds-cluster-1',
       rdsDatabaseName,
-      auroraFullVersion,
       shoppingCartTable: `iyiye_${process.env.ENVIRONMENT}_shopping_cart`
     })
 
-    const storageStack = new StorageNestedStack(
-      this,
-      'StorageNestedStack',
-      {
-        pipelineArtifactStoreBucketName: 'iyiye-pipeline-articat-store',
-        metaFilesBucketName: 'iyiye-meta-files',
-        userFilesBucketName: 'iyiye-user-files'
-      }
-    )
+    const storageStack = new StorageNestedStack(this, 'StorageNestedStack', {
+      pipelineArtifactStoreBucketName: 'iyiye-pipeline-articat-store',
+      metaFilesBucketName: 'iyiye-meta-files',
+      userFilesBucketName: 'iyiye-user-files'
+    })
 
     const cognitoStack = new CognitoNestedStack(this, 'CognitoNestedStack', {
       userPoolName: 'iyiye-up',
@@ -74,7 +68,7 @@ export class IyiyeNativeCdkStack extends Stack {
       getCognitoUserFunctionRepoName: 'get-cognito-user-function',
       rdsBootstrapFunctionRepoName: 'rds-bootstrap-function',
       rdsDbName: rdsDatabaseName,
-      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.ref}`,
+      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
       rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
       rdsDbIngredientTableName,
       rdsDbKitTableName,
@@ -86,7 +80,7 @@ export class IyiyeNativeCdkStack extends Stack {
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
       rdsDbName: rdsDatabaseName,
-      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.ref}`,
+      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
       rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
       rdsDbIngredientTableName,
       rdsDbKitTableName,
