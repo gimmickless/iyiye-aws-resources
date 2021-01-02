@@ -34,13 +34,15 @@ interface PipelineNestedStackProps extends NestedStackProps {
   rdsDbIngredientTableName: string
   rdsDbKitTableName: string
   rdsDbKitIngredientTableName: string
+  rdsDbOrderTableName: string
+  rdsDbOrderKitTableName: string
 }
 
 export class PipelineNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: PipelineNestedStackProps) {
     super(scope, id, props)
 
-    // default pipeline 
+    // default pipeline
     const defaultPipelineProjectProps: PipelineProjectProps = {
       buildSpec: BuildSpec.fromSourceFilename('buildspec.yml'),
       environment: {
@@ -177,7 +179,9 @@ export class PipelineNestedStack extends NestedStack {
                 CredSecret: props.rdsDbCredentialsSecretArn,
                 IngrTbl: props.rdsDbIngredientTableName,
                 KitTbl: props.rdsDbKitTableName,
+                OrdTbl: props.rdsDbOrderTableName,
                 KitIngrTbl: props.rdsDbKitIngredientTableName,
+                OrdKitTbl: props.rdsDbOrderKitTableName,
                 Environment: process.env.ENVIRONMENT as string,
                 Application: process.env.APPLICATION as string
               },

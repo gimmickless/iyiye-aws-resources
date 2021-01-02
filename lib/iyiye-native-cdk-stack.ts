@@ -16,7 +16,9 @@ export class IyiyeNativeCdkStack extends Stack {
     const rdsDatabaseName = `iyiye_${process.env.ENVIRONMENT}_db`
     const rdsDbIngredientTableName = 'Ingredients'
     const rdsDbKitTableName = 'Kits'
+    const rdsDbOrderTableName = 'Orders'
     const rdsDbKitIngredientTableName = 'KitIngredients'
+    const rdsDbOrderKitTableName = 'OrderKits'
 
     // Secrets Manager
     const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
@@ -72,7 +74,9 @@ export class IyiyeNativeCdkStack extends Stack {
       rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
       rdsDbIngredientTableName,
       rdsDbKitTableName,
-      rdsDbKitIngredientTableName
+      rdsDbKitIngredientTableName,
+      rdsDbOrderTableName,
+      rdsDbOrderKitTableName
     })
 
     new AppsyncNestedStack(this, 'AppsyncNestedStack', {
