@@ -46,7 +46,7 @@ export class IyiyeNativeCdkStack extends Stack {
       userFilesBucketArn: storageStack.userFilesBucket.bucketArn
     })
 
-    const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {})
+    // const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {})
 
     // const dataStack = new DataNestedStack(this, 'DataNestedStack', {
     //   rdsVpc: ec2Stack.vpc,
