@@ -20,19 +20,20 @@ export class IyiyeNativeCdkStack extends Stack {
     const rdsDbKitIngredientTableName = 'KitIngredients'
     const rdsDbOrderKitTableName = 'OrderKits'
 
-    // Secrets Manager
-    const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({
-          token: process.env.GH_OAUTH_TOKEN_SECRET
-        })
-      }
-    })
+    // // Secrets Manager
+    // const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
+    //   generateSecretString: {
+    //     generateStringKey: `iyiye/${process.env.ENVIRONMENT}/FunctionGithubOauthTokenSecret`,
+    //     secretStringTemplate: JSON.stringify({
+    //       token: process.env.GH_OAUTH_TOKEN_SECRET
+    //     })
+    //   }
+    // })
 
     // Nested stacks
 
     const storageStack = new StorageNestedStack(this, 'StorageNestedStack', {
-      pipelineArtifactStoreBucketName: 'iyiye-pipeline-articat-store',
+      pipelineArtifactStoreBucketName: 'iyiye-pipeline-artifact-store',
       metaFilesBucketName: 'iyiye-meta-files',
       userFilesBucketName: 'iyiye-user-files'
     })
