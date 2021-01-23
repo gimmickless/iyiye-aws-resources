@@ -30,18 +30,6 @@ export class IyiyeNativeCdkStack extends Stack {
     })
 
     // Nested stacks
-    const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {})
-
-    const dataStack = new DataNestedStack(this, 'DataNestedStack', {
-      rdsVpc: ec2Stack.vpc,
-      rdsSubnets: ec2Stack.vpc.selectSubnets({
-        subnetType: SubnetType.PRIVATE
-      }),
-      rdsVpcSecurityGroups: [ec2Stack.rdsSecurityGroup],
-      rdsDbClusterIdentifier: 'iyiye-rds-cluster-1',
-      rdsDatabaseName,
-      shoppingCartTable: `iyiye_${process.env.ENVIRONMENT}_shopping_cart`
-    })
 
     const storageStack = new StorageNestedStack(this, 'StorageNestedStack', {
       pipelineArtifactStoreBucketName: 'iyiye-pipeline-articat-store',
@@ -58,37 +46,50 @@ export class IyiyeNativeCdkStack extends Stack {
       userFilesBucketArn: storageStack.userFilesBucket.bucketArn
     })
 
-    // TODO: Add Oauth Token Secret ARN
-    const pipelineStack = new PipelineNestedStack(this, 'PipelineNestedStack', {
-      getCognitoUserFunctionName: `iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
-      rdsBootstrapFunctionName: `iyiye-${process.env.ENVIRONMENT}-rds-bootstrap`,
-      cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-      githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
-      artifactStoreBucketName:
-        storageStack.pipelineArtifactStoreBucket.bucketName,
-      githubFunctionReposOwnerName: 'gimmickless',
-      getCognitoUserFunctionRepoName: 'get-cognito-user-function',
-      rdsBootstrapFunctionRepoName: 'rds-bootstrap-function',
-      rdsDbName: rdsDatabaseName,
-      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
-      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
-      rdsDbIngredientTableName,
-      rdsDbKitTableName,
-      rdsDbKitIngredientTableName,
-      rdsDbOrderTableName,
-      rdsDbOrderKitTableName
-    })
+    const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {})
 
-    new AppsyncNestedStack(this, 'AppsyncNestedStack', {
-      appsyncApiName: 'iyiye-prod-appsync-api',
-      cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-      getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
-      rdsDbName: rdsDatabaseName,
-      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
-      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
-      rdsDbIngredientTableName,
-      rdsDbKitTableName,
-      rdsDbKitIngredientTableName
-    })
+    // const dataStack = new DataNestedStack(this, 'DataNestedStack', {
+    //   rdsVpc: ec2Stack.vpc,
+    //   rdsSubnets: ec2Stack.vpc.selectSubnets({
+    //     subnetType: SubnetType.PRIVATE
+    //   }),
+    //   rdsVpcSecurityGroups: [ec2Stack.rdsSecurityGroup],
+    //   rdsDbClusterIdentifier: 'iyiye-rds-cluster-1',
+    //   rdsDatabaseName,
+    //   shoppingCartTable: `iyiye_${process.env.ENVIRONMENT}_shopping_cart`
+    // })
+
+    // // TODO: Add Oauth Token Secret ARN
+    // new PipelineNestedStack(this, 'PipelineNestedStack', {
+    //   getCognitoUserFunctionName: `iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
+    //   rdsBootstrapFunctionName: `iyiye-${process.env.ENVIRONMENT}-rds-bootstrap`,
+    //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
+    //   githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
+    //   artifactStoreBucketName:
+    //     storageStack.pipelineArtifactStoreBucket.bucketName,
+    //   githubFunctionReposOwnerName: 'gimmickless',
+    //   getCognitoUserFunctionRepoName: 'get-cognito-user-function',
+    //   rdsBootstrapFunctionRepoName: 'rds-bootstrap-function',
+    //   rdsDbName: rdsDatabaseName,
+    //   rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
+    //   rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
+    //   rdsDbIngredientTableName,
+    //   rdsDbKitTableName,
+    //   rdsDbKitIngredientTableName,
+    //   rdsDbOrderTableName,
+    //   rdsDbOrderKitTableName
+    // })
+
+    // new AppsyncNestedStack(this, 'AppsyncNestedStack', {
+    //   appsyncApiName: 'iyiye-prod-appsync-api',
+    //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
+    //   getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
+    //   rdsDbName: rdsDatabaseName,
+    //   rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
+    //   rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
+    //   rdsDbIngredientTableName,
+    //   rdsDbKitTableName,
+    //   rdsDbKitIngredientTableName
+    // })
   }
 }
