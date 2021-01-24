@@ -39,11 +39,11 @@ export class IyiyeNativeCdkStack extends Stack {
     })
 
     const cognitoStack = new CognitoNestedStack(this, 'CognitoNestedStack', {
-      userPoolName: 'iyiye-up',
-      userPoolClientName: 'iyiye-up-cl',
-      defaultUserPoolGroupName: 'iyiye-default-ug',
-      adminUserPoolGroupName: 'iyiye-admin-ug',
-      identityPoolName: 'iyiye-ip',
+      userPoolName: `iyiye-${process.env.ENVIRONMENT}-up`,
+      userPoolClientName: `iyiye-${process.env.ENVIRONMENT}-up-cl`,
+      defaultUserPoolGroupName: 'default-ug',
+      adminUserPoolGroupName: 'admin-ug',
+      identityPoolName: `iyiye-${process.env.ENVIRONMENT}-ip`,
       userFilesBucketArn: storageStack.userFilesBucket.bucketArn
     })
 

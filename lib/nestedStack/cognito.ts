@@ -56,16 +56,14 @@ export class CognitoNestedStack extends NestedStack {
         username: true
       },
       standardAttributes: {
-        givenName: { required: true },
-        familyName: { required: true },
+        fullname: { required: true },
         email: { required: true, mutable: false },
-        address: { required: true },
+        address: { required: false },
         birthdate: { required: true, mutable: false },
         phoneNumber: { required: false },
         profilePicture: { required: false },
         locale: { required: false },
         lastUpdateTime: { required: false }
-        // zoneInfo is not available in StandardAttribute interface
       },
       customAttributes: {
         theme: new StringAttribute({ mutable: true, maxLen: 16 }),
