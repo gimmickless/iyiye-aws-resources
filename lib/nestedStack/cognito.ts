@@ -68,7 +68,11 @@ export class CognitoNestedStack extends NestedStack {
       customAttributes: {
         theme: new StringAttribute({ mutable: true, maxLen: 16 }),
         bio: new StringAttribute({ mutable: true }),
-        contactable: new BooleanAttribute({ mutable: true })
+        contactable: new BooleanAttribute({ mutable: true }),
+        homeAddress: new StringAttribute({ mutable: true }),
+        officeAddress: new StringAttribute({ mutable: true }),
+        otherAddress1: new StringAttribute({ mutable: true }),
+        otherAddress2: new StringAttribute({ mutable: true })
       }
     })
 
