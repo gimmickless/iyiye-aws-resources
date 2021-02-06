@@ -18,6 +18,7 @@ import {
   WebIdentityPrincipal
 } from '@aws-cdk/aws-iam'
 import { Construct, NestedStack, NestedStackProps } from '@aws-cdk/core'
+import { awsCognitoCustomAttributeMaxLength } from '../constants'
 
 interface CognitoNestedStackProps extends NestedStackProps {
   userPoolName: string
@@ -69,10 +70,26 @@ export class CognitoNestedStack extends NestedStack {
         theme: new StringAttribute({ mutable: true, maxLen: 16 }),
         bio: new StringAttribute({ mutable: true }),
         contactable: new BooleanAttribute({ mutable: true }),
-        homeAddress: new StringAttribute({ mutable: true }),
-        officeAddress: new StringAttribute({ mutable: true }),
-        otherAddress1: new StringAttribute({ mutable: true }),
-        otherAddress2: new StringAttribute({ mutable: true })
+        altAddress1: new StringAttribute({
+          mutable: true,
+          maxLen: awsCognitoCustomAttributeMaxLength
+        }),
+        altAddress2: new StringAttribute({
+          mutable: true,
+          maxLen: awsCognitoCustomAttributeMaxLength
+        }),
+        altAddress3: new StringAttribute({
+          mutable: true,
+          maxLen: awsCognitoCustomAttributeMaxLength
+        }),
+        altAddress4: new StringAttribute({
+          mutable: true,
+          maxLen: awsCognitoCustomAttributeMaxLength
+        }),
+        altAddress5: new StringAttribute({
+          mutable: true,
+          maxLen: awsCognitoCustomAttributeMaxLength
+        })
       }
     })
 
