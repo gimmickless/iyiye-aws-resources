@@ -67,26 +67,26 @@ export class CognitoNestedStack extends NestedStack {
         lastUpdateTime: { required: false }
       },
       customAttributes: {
-        theme: new StringAttribute({ mutable: true, maxLen: 16 }),
+        theme: new StringAttribute({ mutable: true, maxLen: 8 }),
         bio: new StringAttribute({ mutable: true }),
         contactable: new BooleanAttribute({ mutable: true }),
-        altAddress1: new StringAttribute({
+        address1: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        altAddress2: new StringAttribute({
+        address2: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        altAddress3: new StringAttribute({
+        address3: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        altAddress4: new StringAttribute({
+        address4: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        altAddress5: new StringAttribute({
+        address5: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         })
