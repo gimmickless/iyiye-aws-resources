@@ -1,6 +1,6 @@
 import {
   AccountRecovery,
-  BooleanAttribute,
+  NumberAttribute,
   CfnIdentityPool,
   CfnIdentityPoolRoleAttachment,
   CfnUserPoolGroup,
@@ -52,6 +52,7 @@ export class CognitoNestedStack extends NestedStack {
         requireSymbols: true,
         requireUppercase: true
       },
+      selfSignUpEnabled: true,
       signInAliases: {
         email: true,
         username: true
@@ -69,7 +70,7 @@ export class CognitoNestedStack extends NestedStack {
       customAttributes: {
         theme: new StringAttribute({ mutable: true, maxLen: 8 }),
         bio: new StringAttribute({ mutable: true }),
-        contactable: new BooleanAttribute({ mutable: true }),
+        contactable: new NumberAttribute({ mutable: true }),
         address1: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
