@@ -1,6 +1,5 @@
 import {
   AccountRecovery,
-  NumberAttribute,
   CfnIdentityPool,
   CfnIdentityPoolRoleAttachment,
   CfnUserPoolGroup,
@@ -70,7 +69,7 @@ export class CognitoNestedStack extends NestedStack {
       customAttributes: {
         theme: new StringAttribute({ mutable: true, maxLen: 8 }),
         bio: new StringAttribute({ mutable: true }),
-        contactable: new NumberAttribute({ mutable: true }),
+        contactable: new StringAttribute({ mutable: true, maxLen: 5 }), // BooleanAttribute is not supported with Amplify
         address1: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
