@@ -2,18 +2,20 @@ import '../env'
 import { Construct, Stack, StackProps } from '@aws-cdk/core'
 import { SubnetType } from '@aws-cdk/aws-ec2'
 import { Secret } from '@aws-cdk/aws-secretsmanager'
-import { Ec2NestedStack } from './nestedStack/ec2'
+import { NetworkNestedStack } from './nestedStack/network'
 import { AppsyncNestedStack } from './nestedStack/appsync'
 import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
 
+const applicationNamingPrefix = 'iyiye'
+
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
-    const rdsDatabaseName = `iyiye_${process.env.ENVIRONMENT}_db`
+    const rdsDatabaseName = `${applicationNamingPrefix}_${process.env.ENVIRONMENT}_db`
     const rdsDbIngredientTableName = 'Ingredients'
     const rdsDbKitTableName = 'Kits'
     const rdsDbOrderTableName = 'Orders'
@@ -23,7 +25,7 @@ export class IyiyeNativeCdkStack extends Stack {
     // // Secrets Manager
     // const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
     //   generateSecretString: {
-    //     generateStringKey: `iyiye/${process.env.ENVIRONMENT}/FunctionGithubOauthTokenSecret`,
+    //     generateStringKey: `${applicationNamingPrefix}/${process.env.ENVIRONMENT}/FunctionGithubOauthTokenSecret`,
     //     secretStringTemplate: JSON.stringify({
     //       token: process.env.GH_OAUTH_TOKEN_SECRET
     //     })
@@ -33,37 +35,34 @@ export class IyiyeNativeCdkStack extends Stack {
     // Nested stacks
 
     const storageStack = new StorageNestedStack(this, 'StorageNestedStack', {
-      pipelineArtifactStoreBucketName: 'iyiye-pipeline-artifact-store',
-      metaFilesBucketName: 'iyiye-meta-files',
-      userFilesBucketName: 'iyiye-user-files'
+      pipelineArtifactStoreBucketName: `${applicationNamingPrefix}-pipeline-artifact-store`,
+      metaFilesBucketName: `${applicationNamingPrefix}-meta-files`,
+      userFilesBucketName: `${applicationNamingPrefix}-user-files`
     })
 
     const cognitoStack = new CognitoNestedStack(this, 'CognitoNestedStack', {
-      userPoolName: `iyiye-${process.env.ENVIRONMENT}-up`,
-      userPoolClientName: `iyiye-${process.env.ENVIRONMENT}-up-cl`,
+      userPoolName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up`,
+      userPoolClientName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up-cl`,
       defaultUserPoolGroupName: 'default-ug',
       adminUserPoolGroupName: 'admin-ug',
-      identityPoolName: `iyiye-${process.env.ENVIRONMENT}-ip`,
+      identityPoolName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-ip`,
       userFilesBucketArn: storageStack.userFilesBucket.bucketArn
     })
 
-    // const ec2Stack = new Ec2NestedStack(this, 'Ec2NestedStack', {})
+    const networkStack = new NetworkNestedStack(this, 'NetworkNestedStack', {})
 
-    // const dataStack = new DataNestedStack(this, 'DataNestedStack', {
-    //   rdsVpc: ec2Stack.vpc,
-    //   rdsSubnets: ec2Stack.vpc.selectSubnets({
-    //     subnetType: SubnetType.PRIVATE
-    //   }),
-    //   rdsVpcSecurityGroups: [ec2Stack.rdsSecurityGroup],
-    //   rdsDbClusterIdentifier: 'iyiye-rds-cluster-1',
-    //   rdsDatabaseName,
-    //   shoppingCartTable: `iyiye_${process.env.ENVIRONMENT}_shopping_cart`
-    // })
+    const dataStack = new DataNestedStack(this, 'DataNestedStack', {
+      rdsVpc: networkStack.vpc,
+      rdsVpcSecurityGroups: [networkStack.rdsSecurityGroup],
+      rdsDbClusterIdentifier: `${applicationNamingPrefix}-rds-cluster-1`,
+      rdsDatabaseName,
+      categoryTableName: `${process.env.ENVIRONMENT}.${applicationNamingPrefix}.kit_category`
+    })
 
     // // TODO: Add Oauth Token Secret ARN
     // new PipelineNestedStack(this, 'PipelineNestedStack', {
-    //   getCognitoUserFunctionName: `iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
-    //   rdsBootstrapFunctionName: `iyiye-${process.env.ENVIRONMENT}-rds-bootstrap`,
+    //   getCognitoUserFunctionName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-get-cognito-user`,
+    //   rdsBootstrapFunctionName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-rds-bootstrap`,
     //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
     //   githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
     //   artifactStoreBucketName:
@@ -82,9 +81,9 @@ export class IyiyeNativeCdkStack extends Stack {
     // })
 
     // new AppsyncNestedStack(this, 'AppsyncNestedStack', {
-    //   appsyncApiName: 'iyiye-prod-appsync-api',
+    //   appsyncApiName: '${applicationNamingPrefix}-prod-appsync-api',
     //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-    //   getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:iyiye-${process.env.ENVIRONMENT}-get-cognito-user`,
+    //   getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:${applicationNamingPrefix}-${process.env.ENVIRONMENT}-get-cognito-user`,
     //   rdsDbName: rdsDatabaseName,
     //   rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
     //   rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,

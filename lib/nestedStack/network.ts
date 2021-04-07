@@ -1,21 +1,15 @@
 import { Vpc, SubnetType, SecurityGroup } from '@aws-cdk/aws-ec2'
-import {
-  Construct,
-  NestedStack,
-  NestedStackProps
-} from '@aws-cdk/core'
+import { Construct, NestedStack, NestedStackProps } from '@aws-cdk/core'
 
-interface Ec2NestedStackProps extends NestedStackProps {
-  
-}
+interface NetworkNestedStackProps extends NestedStackProps {}
 
-export class Ec2NestedStack extends NestedStack {
+export class NetworkNestedStack extends NestedStack {
   // Properties
   readonly vpc: Vpc
   readonly rdsSecurityGroup: SecurityGroup
 
   // Constructor
-  constructor(scope: Construct, id: string, props: Ec2NestedStackProps) {
+  constructor(scope: Construct, id: string, props: NetworkNestedStackProps) {
     super(scope, id, props)
 
     //

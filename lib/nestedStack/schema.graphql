@@ -32,11 +32,10 @@ type Subscription @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) 
 # I N P U T
 
 # T Y P E S
-type User @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
-  username: String!
-  picture: AWSURL
-  bio: String
-  contactable: Boolean
+
+type KitCategory @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  name: ID!
+  imageUrl: AWSURL
 }
 
 type Kit @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
