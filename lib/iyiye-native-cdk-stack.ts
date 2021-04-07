@@ -1,6 +1,5 @@
 import '../env'
 import { Construct, Stack, StackProps } from '@aws-cdk/core'
-import { SubnetType } from '@aws-cdk/aws-ec2'
 import { Secret } from '@aws-cdk/aws-secretsmanager'
 import { NetworkNestedStack } from './nestedStack/network'
 import { AppsyncNestedStack } from './nestedStack/appsync'
@@ -14,13 +13,6 @@ const applicationNamingPrefix = 'iyiye'
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
-
-    const rdsDatabaseName = `${applicationNamingPrefix}_${process.env.ENVIRONMENT}_db`
-    const rdsDbIngredientTableName = 'Ingredients'
-    const rdsDbKitTableName = 'Kits'
-    const rdsDbOrderTableName = 'Orders'
-    const rdsDbKitIngredientTableName = 'KitIngredients'
-    const rdsDbOrderKitTableName = 'OrderKits'
 
     // // Secrets Manager
     // const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
@@ -54,8 +46,7 @@ export class IyiyeNativeCdkStack extends Stack {
     const dataStack = new DataNestedStack(this, 'DataNestedStack', {
       rdsVpc: networkStack.vpc,
       rdsVpcSecurityGroups: [networkStack.rdsSecurityGroup],
-      rdsDbClusterIdentifier: `${applicationNamingPrefix}-rds-cluster-1`,
-      rdsDatabaseName,
+      rdsDbClusterIdentifier: `${process.env.ENVIRONMENT}-${applicationNamingPrefix}-rds-cluster-1`,
       categoryTableName: `${process.env.ENVIRONMENT}.${applicationNamingPrefix}.kit_category`
     })
 
