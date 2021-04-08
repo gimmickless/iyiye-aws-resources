@@ -20,13 +20,12 @@ import {
 } from '@aws-cdk/core'
 
 interface PipelineNestedStackProps extends NestedStackProps {
-  getCognitoUserFunctionName: string
+  userFunctionName: string
   cognitoUserPoolId: string
   githubOauthTokenSecretArn: string
   artifactStoreBucketName: string
   githubFunctionReposOwnerName: string
-  getCognitoUserFunctionRepoName: string
-  rdsDbName: string
+  userFunctionRepoName: string
   rdsDbClusterArn: string
   rdsDbCredentialsSecretArn: string
 }
@@ -50,69 +49,69 @@ export class PipelineNestedStack extends NestedStack {
     }
 
     // Pipeline Projects
-    const getCognitoUserFunctionPipelineBuildProject = new PipelineProject(
+    const userFunctionPipelineBuildProject = new PipelineProject(
       this,
-      'GetCognitoUserFunctionPipelineBuildProject',
+      'UserFunctionPipelineBuildProject',
       defaultPipelineProjectProps
     )
 
-    // Artifacts
-    const getCognitoUserFunctionSourceOutput = new Artifact('CUSrc')
-    const getCognitoUserFunctionBuildOutput = new Artifact('CUBld')
+    // // Artifacts
+    // const userFunctionSourceOutput = new Artifact('CUSrc')
+    // const userFunctionBuildOutput = new Artifact('CUBld')
 
-    // Pipelines
-    new Pipeline(this, 'GetCognitoUserFunctionPipeline', {
-      stages: [
-        {
-          stageName: 'Source',
-          actions: [
-            new GitHubSourceAction({
-              actionName: 'FetchSource',
-              owner: props.githubFunctionReposOwnerName,
-              repo: props.getCognitoUserFunctionRepoName,
-              oauthToken: SecretValue.secretsManager(
-                props.githubOauthTokenSecretArn,
-                {
-                  jsonField: 'token'
-                }
-              ),
-              trigger: GitHubTrigger.WEBHOOK,
-              output: getCognitoUserFunctionSourceOutput
-            })
-          ]
-        },
-        {
-          stageName: 'Build',
-          actions: [
-            new CodeBuildAction({
-              actionName: 'BuildFunction',
-              input: getCognitoUserFunctionSourceOutput,
-              outputs: [getCognitoUserFunctionBuildOutput],
-              project: getCognitoUserFunctionPipelineBuildProject
-            })
-          ]
-        },
-        {
-          stageName: 'Deploy',
-          actions: [
-            new CloudFormationCreateUpdateStackAction({
-              actionName: 'DeployFunction',
-              stackName: 'GetCognitoUserFunctionStack',
-              adminPermissions: true,
-              templatePath: getCognitoUserFunctionBuildOutput.atPath(
-                'output-template.yml'
-              ),
-              parameterOverrides: {
-                FunctionName: props.getCognitoUserFunctionName,
-                CognitoUserPoolId: props.cognitoUserPoolId,
-                Environment: process.env.ENVIRONMENT as string,
-                Application: process.env.APPLICATION as string
-              },
-              extraInputs: [getCognitoUserFunctionBuildOutput]
-            })
-          ]
-        }
-      ]
-    })
+    // // Pipelines
+    // new Pipeline(this, 'UserFunctionPipeline', {
+    //   stages: [
+    //     {
+    //       stageName: 'Source',
+    //       actions: [
+    //         new GitHubSourceAction({
+    //           actionName: 'FetchSource',
+    //           owner: props.githubFunctionReposOwnerName,
+    //           repo: props.userFunctionRepoName,
+    //           oauthToken: SecretValue.secretsManager(
+    //             props.githubOauthTokenSecretArn,
+    //             {
+    //               jsonField: 'token'
+    //             }
+    //           ),
+    //           trigger: GitHubTrigger.WEBHOOK,
+    //           output: userFunctionSourceOutput
+    //         })
+    //       ]
+    //     },
+    //     {
+    //       stageName: 'Build',
+    //       actions: [
+    //         new CodeBuildAction({
+    //           actionName: 'BuildFunction',
+    //           input: userFunctionSourceOutput,
+    //           outputs: [userFunctionBuildOutput],
+    //           project: userFunctionPipelineBuildProject
+    //         })
+    //       ]
+    //     },
+    //     {
+    //       stageName: 'Deploy',
+    //       actions: [
+    //         new CloudFormationCreateUpdateStackAction({
+    //           actionName: 'DeployFunction',
+    //           stackName: 'UserFunctionStack',
+    //           adminPermissions: true,
+    //           templatePath: userFunctionBuildOutput.atPath(
+    //             'output-template.yml'
+    //           ),
+    //           parameterOverrides: {
+    //             FunctionName: props.userFunctionName,
+    //             CognitoUserPoolId: props.cognitoUserPoolId,
+    //             Environment: process.env.ENVIRONMENT as string,
+    //             Application: process.env.APPLICATION as string
+    //           },
+    //           extraInputs: [userFunctionBuildOutput]
+    //         })
+    //       ]
+    //     }
+    //   ]
+    // })
   }
 }

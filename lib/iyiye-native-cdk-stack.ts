@@ -50,19 +50,18 @@ export class IyiyeNativeCdkStack extends Stack {
       categoryTableName: `${process.env.ENVIRONMENT}.${applicationNamingPrefix}.kit_category`
     })
 
-    // // TODO: Add Oauth Token Secret ARN
-    // new PipelineNestedStack(this, 'PipelineNestedStack', {
-    //   getCognitoUserFunctionName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-get-cognito-user`,
-    //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-    //   githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
-    //   artifactStoreBucketName:
-    //     storageStack.pipelineArtifactStoreBucket.bucketName,
-    //   githubFunctionReposOwnerName: 'gimmickless',
-    //   getCognitoUserFunctionRepoName: 'get-cognito-user-function',
-    //   rdsDbName: rdsDatabaseName,
-    //   rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
-    //   rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn
-    // })
+    // TODO: Add Oauth Token Secret ARN
+    new PipelineNestedStack(this, 'PipelineNestedStack', {
+      userFunctionName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`,
+      cognitoUserPoolId: cognitoStack.userPool.userPoolId,
+      githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
+      artifactStoreBucketName:
+        storageStack.pipelineArtifactStoreBucket.bucketName,
+      githubFunctionReposOwnerName: 'gimmickless',
+      userFunctionRepoName: 'user-function',
+      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
+      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn
+    })
 
     // new AppsyncNestedStack(this, 'AppsyncNestedStack', {
     //   appsyncApiName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
