@@ -21,21 +21,14 @@ import {
 
 interface PipelineNestedStackProps extends NestedStackProps {
   getCognitoUserFunctionName: string
-  rdsBootstrapFunctionName: string
   cognitoUserPoolId: string
   githubOauthTokenSecretArn: string
   artifactStoreBucketName: string
   githubFunctionReposOwnerName: string
   getCognitoUserFunctionRepoName: string
-  rdsBootstrapFunctionRepoName: string
   rdsDbName: string
   rdsDbClusterArn: string
   rdsDbCredentialsSecretArn: string
-  rdsDbIngredientTableName: string
-  rdsDbKitTableName: string
-  rdsDbKitIngredientTableName: string
-  rdsDbOrderTableName: string
-  rdsDbOrderKitTableName: string
 }
 
 export class PipelineNestedStack extends NestedStack {
@@ -63,18 +56,9 @@ export class PipelineNestedStack extends NestedStack {
       defaultPipelineProjectProps
     )
 
-    const rdsBootstrapFunctionPipelineBuildProject = new PipelineProject(
-      this,
-      'RdsBootstrapFunctionPipelineBuildProject',
-      defaultPipelineProjectProps
-    )
-
     // Artifacts
     const getCognitoUserFunctionSourceOutput = new Artifact('CUSrc')
     const getCognitoUserFunctionBuildOutput = new Artifact('CUBld')
-
-    const rdsBootstrapFunctionSourceOutput = new Artifact('DBSrc')
-    const rdsBootstrapFunctionBuildOutput = new Artifact('DBBld')
 
     // Pipelines
     new Pipeline(this, 'GetCognitoUserFunctionPipeline', {
@@ -125,67 +109,6 @@ export class PipelineNestedStack extends NestedStack {
                 Application: process.env.APPLICATION as string
               },
               extraInputs: [getCognitoUserFunctionBuildOutput]
-            })
-          ]
-        }
-      ]
-    })
-
-    new Pipeline(this, 'RdsBootstrapFunctionPipeline', {
-      stages: [
-        {
-          stageName: 'Source',
-          actions: [
-            new GitHubSourceAction({
-              actionName: 'FetchSource',
-              owner: props.githubFunctionReposOwnerName,
-              repo: props.rdsBootstrapFunctionRepoName,
-              oauthToken: SecretValue.secretsManager(
-                props.githubOauthTokenSecretArn,
-                {
-                  jsonField: 'token'
-                }
-              ),
-              trigger: GitHubTrigger.WEBHOOK,
-              output: rdsBootstrapFunctionSourceOutput
-            })
-          ]
-        },
-        {
-          stageName: 'Build',
-          actions: [
-            new CodeBuildAction({
-              actionName: 'BuildFunction',
-              input: rdsBootstrapFunctionSourceOutput,
-              outputs: [rdsBootstrapFunctionBuildOutput],
-              project: rdsBootstrapFunctionPipelineBuildProject
-            })
-          ]
-        },
-        {
-          stageName: 'Deploy',
-          actions: [
-            new CloudFormationCreateUpdateStackAction({
-              actionName: 'DeployFunction',
-              stackName: 'RdsBootstrapFunctionStack',
-              adminPermissions: true,
-              templatePath: rdsBootstrapFunctionBuildOutput.atPath(
-                'output-template.yml'
-              ),
-              parameterOverrides: {
-                FunctionName: props.rdsBootstrapFunctionName,
-                DbName: props.rdsDbName,
-                DbClusterArn: props.rdsDbClusterArn,
-                CredSecret: props.rdsDbCredentialsSecretArn,
-                IngrTbl: props.rdsDbIngredientTableName,
-                KitTbl: props.rdsDbKitTableName,
-                OrdTbl: props.rdsDbOrderTableName,
-                KitIngrTbl: props.rdsDbKitIngredientTableName,
-                OrdKitTbl: props.rdsDbOrderKitTableName,
-                Environment: process.env.ENVIRONMENT as string,
-                Application: process.env.APPLICATION as string
-              },
-              extraInputs: [rdsBootstrapFunctionBuildOutput]
             })
           ]
         }

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import 'dotenv/config.js'
+import '../env'
 import 'source-map-support/register'
 import { App, Tags } from '@aws-cdk/core'
 import { IyiyeNativeCdkStack } from '../lib/iyiye-native-cdk-stack'

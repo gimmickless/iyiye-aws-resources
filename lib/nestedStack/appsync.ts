@@ -122,10 +122,11 @@ export class AppsyncNestedStack extends NestedStack {
     // Function Resolvers
     getCognitoUserFunctionDS.createResolver({
       typeName: 'Query',
-      fieldName: 'getUserByUsername',
-      requestMappingTemplate: MappingTemplate.lambdaRequest(
-        "$util.toJson($ctx.args)"
-      ),
+      fieldName: 'getUser',
+      requestMappingTemplate: MappingTemplate.lambdaRequest(`{
+        "field": "getUser",
+        "arguments": $util.toJson($ctx.args)
+      }`),
       responseMappingTemplate: MappingTemplate.lambdaResult()
     })
 
