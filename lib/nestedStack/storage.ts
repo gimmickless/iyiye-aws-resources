@@ -9,31 +9,18 @@ import {
 interface StorageNestedStackProps extends NestedStackProps {
   userFilesBucketName: string
   metaFilesBucketName: string
-  pipelineArtifactStoreBucketName: string
 }
 
 export class StorageNestedStack extends NestedStack {
   // Properties
   readonly metaFilesBucket: Bucket
   readonly userFilesBucket: Bucket
-  readonly pipelineArtifactStoreBucket: Bucket
 
   // Constructor
   constructor(scope: Construct, id: string, props: StorageNestedStackProps) {
     super(scope, id, props)
 
     //
-
-    this.pipelineArtifactStoreBucket = new Bucket(
-      this,
-      'PipelineArtifactStoreBucket',
-      {
-        bucketName: props.pipelineArtifactStoreBucketName,
-        accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
-        removalPolicy: RemovalPolicy.RETAIN,
-        versioned: true
-      }
-    )
 
     this.metaFilesBucket = new Bucket(this, 'MetaFilesBucket', {
       bucketName: props.metaFilesBucketName,

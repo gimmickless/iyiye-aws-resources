@@ -17,6 +17,22 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 ## Prerequisities
 
+### Create GitHub Secrets Manager outside CDK
+
+By design, CDK [does not support](https://github.com/aws/aws-cdk/issues/5810#issuecomment-672736662) creating secrets with a certain value. Thus, adding a GitHub Oauth Token as a secret in CDK is not possible.
+
+To create it
+
+1. In AWS CLI, run the follows (only change `{the_token_goes_here}`, as the other fields are used with their values in the code )
+
+   ```
+   aws secretsmanager create-secret --name iyiye/GithubOauthTokenSecret \
+   --description "GitHub Oauth Token for iyiye repos" \
+   --secret-string {"token":"{the_token_goes_here}"}
+   ```
+
+2. Add/update the `GITHUB_TOKEN_SECRET_ID` value in `.env` file.
+
 ### Local Development
 
 Create an `.env.local` file with some content like:

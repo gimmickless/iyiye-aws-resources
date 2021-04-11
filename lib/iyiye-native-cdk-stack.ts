@@ -14,20 +14,7 @@ export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
-    // Secrets Manager
-    const githubOauthTokenSecret = new Secret(this, 'GithubOauthTokenSecret', {
-      generateSecretString: {
-        generateStringKey: `${applicationNamingPrefix}/${process.env.ENVIRONMENT}/GithubOauthTokenSecret`,
-        secretStringTemplate: JSON.stringify({
-          token: process.env.GH_OAUTH_TOKEN_SECRET
-        })
-      }
-    })
-
-    // Nested stacks
-
     const storageStack = new StorageNestedStack(this, 'StorageNestedStack', {
-      pipelineArtifactStoreBucketName: `${applicationNamingPrefix}-pipeline-artifact-store`,
       metaFilesBucketName: `${applicationNamingPrefix}-meta-files`,
       userFilesBucketName: `${applicationNamingPrefix}-user-files`
     })
@@ -54,13 +41,11 @@ export class IyiyeNativeCdkStack extends Stack {
     new PipelineNestedStack(this, 'PipelineNestedStack', {
       userFunctionName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`,
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-      githubOauthTokenSecretArn: githubOauthTokenSecret.secretArn,
-      artifactStoreBucketName:
-        storageStack.pipelineArtifactStoreBucket.bucketName,
       githubFunctionReposOwnerName: 'gimmickless',
       userFunctionRepoName: 'user-function',
       rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
-      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn
+      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
+      artifactStoreBucketName: `${applicationNamingPrefix}-pipeline-artifacts`
     })
 
     // new AppsyncNestedStack(this, 'AppsyncNestedStack', {
