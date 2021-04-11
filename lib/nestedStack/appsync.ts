@@ -6,22 +6,19 @@ import {
   Schema,
   FieldLogLevel,
   MappingTemplate,
-  CfnDataSource,
   CfnResolver
 } from '@aws-cdk/aws-appsync'
 import { UserPool } from '@aws-cdk/aws-cognito'
 import { Function } from '@aws-cdk/aws-lambda'
+import { IServerlessCluster } from '@aws-cdk/aws-rds'
+import { ISecret } from '@aws-cdk/aws-secretsmanager'
 
 interface AppsyncNestedStackProps extends NestedStackProps {
   appsyncApiName: string
   cognitoUserPoolId: string
   getCognitoUserFunctionArn: string
-  rdsDbName: string
-  rdsDbClusterArn: string
-  rdsDbCredentialsSecretArn: string
-  rdsDbIngredientTableName: string
-  rdsDbKitTableName: string
-  rdsDbKitIngredientTableName: string
+  rdsDbCluster: IServerlessCluster
+  rdsDbCredentialsSecretStore: ISecret
 }
 
 const rdsListResponseMappingTemplate = `
@@ -100,24 +97,11 @@ export class AppsyncNestedStack extends NestedStack {
       )
     )
 
-    /*
-     * TODO: Add as api.addRelationalDataSource instead...
-     * ... when https://github.com/gimmickless/iyiye-aws-resources/issues/7 is resolved
-     */
-    const rdsDS = new CfnDataSource(this, 'RdsDataSource', {
-      apiId: api.apiId,
-      name: 'rds',
-      type: 'RELATIONAL_DATABASE',
-      relationalDatabaseConfig: {
-        relationalDatabaseSourceType: 'RDS_HTTP_ENDPOINT',
-        rdsHttpEndpointConfig: {
-          awsRegion: this.region,
-          awsSecretStoreArn: props.rdsDbCredentialsSecretArn,
-          dbClusterIdentifier: props.rdsDbClusterArn,
-          databaseName: props.rdsDbName
-        }
-      }
-    })
+    const rdsDS = api.addRdsDataSource(
+      'rds',
+      props.rdsDbCluster,
+      props.rdsDbCredentialsSecretStore
+    )
 
     // Function Resolvers
     getCognitoUserFunctionDS.createResolver({

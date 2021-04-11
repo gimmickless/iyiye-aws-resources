@@ -13,7 +13,6 @@ import {
   GitHubTrigger
 } from '@aws-cdk/aws-codepipeline-actions'
 import { Bucket, BucketAccessControl } from '@aws-cdk/aws-s3'
-import { Secret } from '@aws-cdk/aws-secretsmanager'
 import {
   Construct,
   Duration,

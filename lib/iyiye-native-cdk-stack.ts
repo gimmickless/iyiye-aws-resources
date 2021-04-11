@@ -52,12 +52,8 @@ export class IyiyeNativeCdkStack extends Stack {
     //   appsyncApiName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
     //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
     //   getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:${applicationNamingPrefix}-${process.env.ENVIRONMENT}-get-cognito-user`,
-    //   rdsDbName: rdsDatabaseName,
-    //   rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
-    //   rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
-    //   rdsDbIngredientTableName,
-    //   rdsDbKitTableName,
-    //   rdsDbKitIngredientTableName
+    //   rdsDbCluster: dataStack.databaseCluster,
+    //   rdsDbCredentialsSecretStore: dataStack.dbSecret
     // })
   }
 }
