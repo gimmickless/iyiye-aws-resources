@@ -21,15 +21,22 @@ import {
   RemovalPolicy,
   SecretValue
 } from '@aws-cdk/core'
+import { defaultGitHubBranch } from '../constants'
 
 interface PipelineNestedStackProps extends NestedStackProps {
-  userFunctionName: string
+  lambda: {
+    userFuncName: string
+  }
   cognitoUserPoolId: string
+  github: {
+    functionReposOwnerName: string
+    userFunctionRepoName: string
+  }
   artifactStoreBucketName: string
-  githubFunctionReposOwnerName: string
-  userFunctionRepoName: string
-  rdsDbClusterArn: string
-  rdsDbCredentialsSecretArn: string
+  rds: {
+    dbClusterArn: string
+    dbCredentialsSecretArn: string
+  }
 }
 
 export class PipelineNestedStack extends NestedStack {
@@ -49,6 +56,7 @@ export class PipelineNestedStack extends NestedStack {
 
     // default pipeline
     const defaultPipelineProjectProps: PipelineProjectProps = {
+      projectName: `${process.env.APPLICATION}-user-func-bp`,
       buildSpec: BuildSpec.fromSourceFilename('buildspec.yml'),
       environment: {
         buildImage: LinuxBuildImage.STANDARD_4_0,
@@ -63,19 +71,19 @@ export class PipelineNestedStack extends NestedStack {
     }
 
     // Pipeline Projects
-    const userFunctionPipelineBuildProject = new PipelineProject(
+    const userFuncPipelineBuildProject = new PipelineProject(
       this,
-      'UserFunctionPipelineBuildProject',
+      'UserFuncPipelineBuildProject',
       defaultPipelineProjectProps
     )
 
     // Artifacts
-    const userFunctionSourceOutput = new Artifact('CUSrc')
-    const userFunctionBuildOutput = new Artifact('CUBld')
+    const userFuncSourceOutput = new Artifact('CUSrc')
+    const userFuncBuildOutput = new Artifact('CUBld')
 
     // Pipelines
-    new Pipeline(this, 'UserFunctionPipeline', {
-      pipelineName: `${process.env.APPLICATION}-user-function-pl`,
+    new Pipeline(this, 'UserFuncPipeline', {
+      pipelineName: `${process.env.APPLICATION}-user-func-pl`,
       crossAccountKeys: false,
       artifactBucket: pipelineArtifactStoreBucket,
       restartExecutionOnUpdate: true,
@@ -85,8 +93,9 @@ export class PipelineNestedStack extends NestedStack {
           actions: [
             new GitHubSourceAction({
               actionName: 'FetchSource',
-              owner: props.githubFunctionReposOwnerName,
-              repo: props.userFunctionRepoName,
+              owner: props.github.functionReposOwnerName,
+              repo: props.github.userFunctionRepoName,
+              branch: defaultGitHubBranch,
               oauthToken: SecretValue.secretsManager(
                 process.env.GITHUB_TOKEN_SECRET_ID ?? '',
                 {
@@ -94,7 +103,7 @@ export class PipelineNestedStack extends NestedStack {
                 }
               ),
               trigger: GitHubTrigger.WEBHOOK,
-              output: userFunctionSourceOutput
+              output: userFuncSourceOutput
             })
           ]
         },
@@ -103,9 +112,9 @@ export class PipelineNestedStack extends NestedStack {
           actions: [
             new CodeBuildAction({
               actionName: 'BuildFunction',
-              input: userFunctionSourceOutput,
-              outputs: [userFunctionBuildOutput],
-              project: userFunctionPipelineBuildProject
+              input: userFuncSourceOutput,
+              outputs: [userFuncBuildOutput],
+              project: userFuncPipelineBuildProject
             })
           ]
         },
@@ -114,18 +123,16 @@ export class PipelineNestedStack extends NestedStack {
           actions: [
             new CloudFormationCreateUpdateStackAction({
               actionName: 'DeployFunction',
-              stackName: `${process.env.APPLICATION}-user-function-stack`,
+              stackName: `${process.env.APPLICATION}-user-func-stack`,
               adminPermissions: true,
-              templatePath: userFunctionBuildOutput.atPath(
-                'output-template.yml'
-              ),
+              templatePath: userFuncBuildOutput.atPath('output-template.yml'),
               parameterOverrides: {
-                FunctionName: props.userFunctionName,
+                FunctionName: props.lambda.userFuncName,
                 CognitoUserPoolId: props.cognitoUserPoolId,
                 Environment: process.env.ENVIRONMENT as string,
                 Application: process.env.APPLICATION as string
               },
-              extraInputs: [userFunctionBuildOutput],
+              extraInputs: [userFuncBuildOutput],
               replaceOnFailure: true
             })
           ]

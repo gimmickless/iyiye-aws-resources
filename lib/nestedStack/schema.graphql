@@ -1,44 +1,86 @@
-## TODO: Populate this
 # Q U E R I E S
-type Query @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
-  # User
+type Query
+  @aws_iam
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
   getUser(username: String!): User
-  # Kit
-  listKits(
-    orderColumn: KitOrderColumn 
-    sqlOrderDirection: SQLOrderDirection
-    cuisineCountryCode: String
-    diets: String # Or [String] ?
-    priceUpperLimit: Float
-    calorieUpperLimit: Number
-    prepTimeUpperLimit: Number
-    approved: Boolean
+
+  listInAppNotificationsForUser(
+    username: String!
     limit: Int
     offset: Int
-  ): [Kit]
+  ): [InAppNotification]
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  # listKits(
+  #   orderColumn: KitOrderColumn
+  #   sqlOrderDirection: SQLOrderDirection
+  #   cuisineCountryCode: String
+  #   diets: String # Or [String] ?
+  #   priceUpperLimit: Float
+  #   calorieUpperLimit: Number
+  #   prepTimeUpperLimit: Number
+  #   approved: Boolean
+  #   limit: Int
+  #   offset: Int
+  # ): [Kit]
 }
 
 # M U T A T I O N S
 type Mutation @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
-  addCommunityKit(input: AddKitInput!): Kit
-  addAdminKit(input: AddKitInput!): Kit
+  createInAppNotification(
+    input: CreateInAppNotificationInput!
+  ): InAppNotification
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-admin-ug"])
+  updateInAppNotificationsForUserAsRead(
+    input: UpdateInAppNotificationsForUserAsReadInput!
+  ): InAppNotification
 }
 
 # S U B S C R I P T I O N S
-type Subscription @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
-
+type Subscription
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  onCreateInAppNotification: InAppNotification
+    @aws_subscribe(mutations: ["createInAppNotification"])
+  onUpdateInAppNotificationsIsRead: InAppNotification
+    @aws_subscribe(mutations: ["updateInAppNotificationsIsRead"])
 }
 
 # I N P U T
+input CreateInAppNotificationInput
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-admin-ug"]) {
+  type: InAppNotificationType
+  receiverUsername: String!
+  body: String
+}
+
+input UpdateInAppNotificationsForUserAsReadInput
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  receiverUsername: String!
+}
 
 # T Y P E S
 
-type KitCategory @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+type InAppNotification
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  id: ID!
+  type: InAppNotificationType
+  receiverUsername: String!
+  body: String
+  isRead: Boolean!
+  createdTime: AWSDateTime!
+  lastUpdatedTime: AWSDateTime!
+}
+
+type KitCategory
+  @aws_iam
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
   name: ID!
   imageUrl: AWSURL
 }
 
-type Kit @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+type Kit
+  @aws_iam
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
   id: ID!
   name: String!
   version: String!
@@ -60,6 +102,15 @@ type Kit @aws_iam @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) 
 }
 
 # E N U M S
+
+enum InAppNotificationType {
+  announcement
+  promotion
+  report
+  comment
+  star
+  flag
+}
 
 enum KitOrderColumn {
   createTime

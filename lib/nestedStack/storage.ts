@@ -1,4 +1,4 @@
-import { Bucket, BucketAccessControl, HttpMethods } from '@aws-cdk/aws-s3'
+import { Bucket, HttpMethods } from '@aws-cdk/aws-s3'
 import {
   Construct,
   NestedStack,

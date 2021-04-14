@@ -1,15 +1,13 @@
 // import '../env'
 import { Construct, Stack, StackProps } from '@aws-cdk/core'
-import { Secret } from '@aws-cdk/aws-secretsmanager'
 import { NetworkNestedStack } from './nestedStack/network'
-import { AppsyncNestedStack } from './nestedStack/appsync'
 import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
 
 const applicationNamingPrefix = 'iyiye'
-
+const userFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
@@ -39,21 +37,32 @@ export class IyiyeNativeCdkStack extends Stack {
 
     // TODO: Add Oauth Token Secret ARN
     new PipelineNestedStack(this, 'PipelineNestedStack', {
-      userFunctionName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`,
+      lambda: {
+        userFuncName: userFuncName
+      },
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-      githubFunctionReposOwnerName: 'gimmickless',
-      userFunctionRepoName: 'user-function',
-      rdsDbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
-      rdsDbCredentialsSecretArn: dataStack.dbSecret.secretArn,
+      github: {
+        functionReposOwnerName: 'gimmickless',
+        userFunctionRepoName: 'user-function'
+      },
+      rds: {
+        dbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
+        dbCredentialsSecretArn: dataStack.dbSecret.secretArn
+      },
       artifactStoreBucketName: `${applicationNamingPrefix}-pipeline-artifacts`
     })
 
     // new AppsyncNestedStack(this, 'AppsyncNestedStack', {
     //   appsyncApiName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
     //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-    //   getCognitoUserFunctionArn: `arn:aws:lambda:${this.region}:${this.account}:function:${applicationNamingPrefix}-${process.env.ENVIRONMENT}-get-cognito-user`,
-    //   rdsDbCluster: dataStack.databaseCluster,
-    //   rdsDbCredentialsSecretStore: dataStack.dbSecret
+    //   lambda: {
+    //     userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`
+    //   },
+    //   rds: {
+    //     dbCluster: dataStack.databaseCluster,
+    //     dbCredentialsSecretStore: dataStack.dbSecret,
+    //     notificationDatabaseName: rdsDatabaseNames.notification
+    //   }
     // })
   }
 }

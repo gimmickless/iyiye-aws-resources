@@ -35,11 +35,7 @@ To create it
 
 ### Local Development
 
-Create an `.env.local` file with some content like:
-
-```env
-GH_OAUTH_TOKEN_SECRET=xxxxxxxxx
-```
+TBD
 
 ## Apology
 
