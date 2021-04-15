@@ -154,7 +154,6 @@ export class CognitoNestedStack extends NestedStack {
       ]
     })
 
-    //TODO: Add/Complete CognitoAuthorizedRole, CognitoUnauthorizedRole, IdentityPoolRoleAttachment
     const unauthIdentityPoolRole = new Role(this, 'UnauthIdentityPoolRole', {
       assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {

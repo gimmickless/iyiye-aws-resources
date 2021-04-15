@@ -5,9 +5,13 @@ import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
 import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
+import { AppsyncNestedStack } from './nestedStack/appsync'
 
 const applicationNamingPrefix = 'iyiye'
 const userFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`
+const rdsDatabaseNames = {
+  notification: 'notif'
+}
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
@@ -35,7 +39,6 @@ export class IyiyeNativeCdkStack extends Stack {
       categoryTableName: `${process.env.ENVIRONMENT}.${applicationNamingPrefix}.kit_category`
     })
 
-    // TODO: Add Oauth Token Secret ARN
     new PipelineNestedStack(this, 'PipelineNestedStack', {
       lambda: {
         userFuncName: userFuncName
@@ -52,17 +55,17 @@ export class IyiyeNativeCdkStack extends Stack {
       artifactStoreBucketName: `${applicationNamingPrefix}-pipeline-artifacts`
     })
 
-    // new AppsyncNestedStack(this, 'AppsyncNestedStack', {
-    //   appsyncApiName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
-    //   cognitoUserPoolId: cognitoStack.userPool.userPoolId,
-    //   lambda: {
-    //     userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`
-    //   },
-    //   rds: {
-    //     dbCluster: dataStack.databaseCluster,
-    //     dbCredentialsSecretStore: dataStack.dbSecret,
-    //     notificationDatabaseName: rdsDatabaseNames.notification
-    //   }
-    // })
+    new AppsyncNestedStack(this, 'AppsyncNestedStack', {
+      appsyncApiName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
+      cognitoUserPoolId: cognitoStack.userPool.userPoolId,
+      lambda: {
+        userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`
+      },
+      rds: {
+        dbCluster: dataStack.databaseCluster,
+        dbCredentialsSecretStore: dataStack.dbSecret,
+        notificationDbName: rdsDatabaseNames.notification
+      }
+    })
   }
 }
