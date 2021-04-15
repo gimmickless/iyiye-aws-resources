@@ -12,8 +12,10 @@ import {
   GitHubSourceAction,
   GitHubTrigger
 } from '@aws-cdk/aws-codepipeline-actions'
+import { LogGroup } from '@aws-cdk/aws-logs'
 import { Bucket, BucketAccessControl } from '@aws-cdk/aws-s3'
 import {
+  CfnCapabilities,
   Construct,
   Duration,
   NestedStack,
@@ -43,6 +45,11 @@ export class PipelineNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: PipelineNestedStackProps) {
     super(scope, id, props)
 
+    const userFuncPipelineBuildProjectLogGroup = new LogGroup(
+      this,
+      `UserFuncPipelineBuildProjectLogGroup`
+    )
+
     const pipelineArtifactStoreBucket = new Bucket(
       this,
       'PipelineArtifactStoreBucket',
@@ -56,7 +63,7 @@ export class PipelineNestedStack extends NestedStack {
 
     // default pipeline
     const defaultPipelineProjectProps: PipelineProjectProps = {
-      projectName: `${process.env.APPLICATION}-user-func-bp`,
+      projectName: `${process.env.APPLICATION}-user-fn-bp`,
       buildSpec: BuildSpec.fromSourceFilename('buildspec.yml'),
       environment: {
         buildImage: LinuxBuildImage.STANDARD_4_0,
@@ -67,7 +74,12 @@ export class PipelineNestedStack extends NestedStack {
           }
         }
       },
-      timeout: Duration.minutes(10)
+      timeout: Duration.minutes(10),
+      logging: {
+        cloudWatch: {
+          logGroup: userFuncPipelineBuildProjectLogGroup
+        }
+      }
     }
 
     // Pipeline Projects
@@ -83,7 +95,7 @@ export class PipelineNestedStack extends NestedStack {
 
     // Pipelines
     new Pipeline(this, 'UserFuncPipeline', {
-      pipelineName: `${process.env.APPLICATION}-user-func-pl`,
+      pipelineName: `${process.env.APPLICATION}-user-fn-pl`,
       crossAccountKeys: false,
       artifactBucket: pipelineArtifactStoreBucket,
       restartExecutionOnUpdate: true,
@@ -123,8 +135,12 @@ export class PipelineNestedStack extends NestedStack {
           actions: [
             new CloudFormationCreateUpdateStackAction({
               actionName: 'DeployFunction',
-              stackName: `${process.env.APPLICATION}-user-func-stack`,
+              stackName: `${process.env.APPLICATION}-user-fn-stack`,
               adminPermissions: true,
+              cfnCapabilities: [
+                CfnCapabilities.AUTO_EXPAND,
+                CfnCapabilities.NAMED_IAM
+              ],
               templatePath: userFuncBuildOutput.atPath('output-template.yml'),
               parameterOverrides: {
                 FunctionName: props.lambda.userFuncName,

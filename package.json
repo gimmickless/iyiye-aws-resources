@@ -34,6 +34,7 @@
     "@aws-cdk/aws-ec2": "^1.98.0",
     "@aws-cdk/aws-iam": "^1.98.0",
     "@aws-cdk/aws-lambda": "^1.98.0",
+    "@aws-cdk/aws-logs": "^1.98.0",
     "@aws-cdk/aws-rds": "^1.98.0",
     "@aws-cdk/aws-s3": "^1.98.0",
     "@aws-cdk/aws-secretsmanager": "^1.98.0",
