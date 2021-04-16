@@ -101,89 +101,89 @@ export class AppsyncNestedStack extends NestedStack {
       fieldName: 'getUserBasicInfo'
     })
 
-    // notificationRdsDS.createResolver({
-    //   typeName: 'Query',
-    //   fieldName: 'listInAppNotificationsForUser',
-    //   requestMappingTemplate: MappingTemplate.fromString(`
-    //   #set ($statement = "
-    //     ${selectNotifDbInAppNotifications}
-    //     Where receiver_username=:USERNAME
-    //     Order By created_time Desc Limit :LIMIT Offset :OFFSET
-    //   ")
-    //   {
-    //     "version": "2018-05-29",
-    //     "statements": [
-    //       $util.toJson($statement)
-    //     ],
-    //     "variableMap": {
-    //       ":USERNAME": $util.toJson($ctx.args.username),
-    //       ":LIMIT": $util.defaultIfNull(\${ctx.args.limit}, 10),
-    //       ":OFFSET": $util.defaultIfNull(\${ctx.args.offset}, 0),
-    //     }
-    //   }`),
-    //   responseMappingTemplate: MappingTemplate.fromString(
-    //     rdsListResponseMappingTemplate
-    //   )
-    // })
-    // notificationRdsDS.createResolver({
-    //   typeName: 'Mutation',
-    //   fieldName: 'createInAppNotification',
-    //   requestMappingTemplate: MappingTemplate.fromString(`
-    //   #set($insertStatement="
-    //     Insert Into ${notifDbInAppNotificationsTableName}
-    //     (type, receiver_username, body) Values
-    //     (:TYPE, :USERNAME, :BODY)
-    //   ")
-    //   #set($selectStatement="
-    //     ${selectNotifDbInAppNotifications}
-    //     Where type=:TYPE
-    //       And receiver_username=:USERNAME
-    //       And body=:BODY
-    //     Order By created_time Desc Limit 1
-    //   ")
-    //   {
-    //     "version": "2018-05-29",
-    //     "statements": [
-    //       $util.toJson($insertStatement),
-    //       $util.toJson($selectStatement)
-    //     ],
-    //     "variableMap": {
-    //       ":TYPE": $util.toJson($ctx.args.input.type),
-    //       ":USERNAME": $util.toJson($ctx.args.input.receiverUsername),
-    //       ":BODY": $util.toJson($ctx.args.input.body)
-    //     }
-    //   }`),
-    //   responseMappingTemplate: MappingTemplate.fromString(
-    //     rdsMutationResponseMappingTemplate
-    //   )
-    // })
-    // notificationRdsDS.createResolver({
-    //   typeName: 'Mutation',
-    //   fieldName: 'updateInAppNotificationsForUserAsRead',
-    //   requestMappingTemplate: MappingTemplate.fromString(`
-    //   #set($updateStatement="
-    //     Update ${notifDbInAppNotificationsTableName}
-    //     Set is_read=true
-    //     Where receiver_username:USERNAME
-    //   ")
-    //   #set($selectStatement="
-    //     ${selectNotifDbInAppNotifications}
-    //     Where receiver_username=:USERNAME
-    //     Order By last_updated_time Desc Limit 1
-    //   ")
-    //   {
-    //     "version": "2018-05-29",
-    //     "statements": [
-    //       $util.toJson($updateStatement),
-    //       $util.toJson($selectStatement)
-    //     ],
-    //     "variableMap": {
-    //       ":USERNAME": $util.toJson($ctx.args.input.receiverUsername)
-    //     }
-    //   }`),
-    //   responseMappingTemplate: MappingTemplate.fromString(
-    //     rdsMutationResponseMappingTemplate
-    //   )
-    // })
+    notificationRdsDS.createResolver({
+      typeName: 'Query',
+      fieldName: 'listInAppNotificationsForUser',
+      requestMappingTemplate: MappingTemplate.fromString(`
+      #set ($statement = "
+        ${selectNotifDbInAppNotifications}
+        Where receiver_username=:USERNAME
+        Order By created_time Desc Limit :LIMIT Offset :OFFSET
+      ")
+      {
+        "version": "2018-05-29",
+        "statements": [
+          $util.toJson($statement)
+        ],
+        "variableMap": {
+          ":USERNAME": $util.toJson($ctx.args.username),
+          ":LIMIT": $util.defaultIfNull(\${ctx.args.limit}, 10),
+          ":OFFSET": $util.defaultIfNull(\${ctx.args.offset}, 0),
+        }
+      }`),
+      responseMappingTemplate: MappingTemplate.fromString(
+        rdsListResponseMappingTemplate
+      )
+    })
+    notificationRdsDS.createResolver({
+      typeName: 'Mutation',
+      fieldName: 'createInAppNotification',
+      requestMappingTemplate: MappingTemplate.fromString(`
+      #set($insertStatement="
+        Insert Into ${notifDbInAppNotificationsTableName}
+        (type, receiver_username, body) Values
+        (:TYPE, :USERNAME, :BODY)
+      ")
+      #set($selectStatement="
+        ${selectNotifDbInAppNotifications}
+        Where type=:TYPE
+          And receiver_username=:USERNAME
+          And body=:BODY
+        Order By created_time Desc Limit 1
+      ")
+      {
+        "version": "2018-05-29",
+        "statements": [
+          $util.toJson($insertStatement),
+          $util.toJson($selectStatement)
+        ],
+        "variableMap": {
+          ":TYPE": $util.toJson($ctx.args.input.type),
+          ":USERNAME": $util.toJson($ctx.args.input.receiverUsername),
+          ":BODY": $util.toJson($ctx.args.input.body)
+        }
+      }`),
+      responseMappingTemplate: MappingTemplate.fromString(
+        rdsMutationResponseMappingTemplate
+      )
+    })
+    notificationRdsDS.createResolver({
+      typeName: 'Mutation',
+      fieldName: 'updateInAppNotificationsForUserAsRead',
+      requestMappingTemplate: MappingTemplate.fromString(`
+      #set($updateStatement="
+        Update ${notifDbInAppNotificationsTableName}
+        Set is_read=true
+        Where receiver_username:USERNAME
+      ")
+      #set($selectStatement="
+        ${selectNotifDbInAppNotifications}
+        Where receiver_username=:USERNAME
+        Order By last_updated_time Desc Limit 1
+      ")
+      {
+        "version": "2018-05-29",
+        "statements": [
+          $util.toJson($updateStatement),
+          $util.toJson($selectStatement)
+        ],
+        "variableMap": {
+          ":USERNAME": $util.toJson($ctx.args.input.receiverUsername)
+        }
+      }`),
+      responseMappingTemplate: MappingTemplate.fromString(
+        rdsMutationResponseMappingTemplate
+      )
+    })
   }
 }
