@@ -91,7 +91,7 @@ type InAppNotification
 #   @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
 #   id: ID!
 #   name: String!
-#   version: String!
+#   version: String
 #   description: String
 #   authorUsername: ID
 #   author: User
@@ -120,12 +120,13 @@ enum InAppNotificationType {
   flag
 }
 
-enum KitOrderColumn {
-  createTime
-  lastUpdateTime
-  price
-  calorie
-  prepTime
+enum IngredientUnit {
+  gram
+  liter
+  piece
+  bunch
+  slice
+  clove
 }
 
 enum SQLOrderDirection {
