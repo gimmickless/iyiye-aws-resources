@@ -8,6 +8,6 @@ Select
   body,
   is_read As isRead,
   created_time As createdTime,
-  last_updated_time As lastUpdatedTime,
+  last_updated_time As lastUpdatedTime
   From ${notifDbInAppNotificationsTableName}
 `

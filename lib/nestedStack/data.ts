@@ -46,8 +46,9 @@ export class DataNestedStack extends NestedStack {
     )
 
     // RDS
-    this.dbSecret = new DatabaseSecret(this, 'AuroraSecret', {
-      username: 'root'
+    this.dbSecret = new DatabaseSecret(this, 'AuroraRdsSecret', {
+      username: 'root',
+      secretName: `${process.env.APPLICATION}/AuroraRdsSecret`
     })
 
     this.databaseCluster = new RdsDBCluster(this, 'RdsDatabase', {

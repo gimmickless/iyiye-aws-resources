@@ -43,7 +43,7 @@ TBD
 
 Although the basic way is to separate databases, having one instance and sparing **distinct schemas** to services (AppSync models here) is also [an option](https://microservices.io/patterns/data/database-per-service.html). However, as MySQL [does not support](https://stackoverflow.com/a/11618350/4636715) classical way of schemas, we create databases as Chris Richardson primarily proposes.
 
-Although one service may address more than one function (or none), we considered domains as follows and created databases for each. See the [DDL](bootstrap/prod-iyiye-rds-cluster-1.ddl.sql). DynamoDB tables are out of scope.
+Although one service may address more than one function (or none), we considered domains as follows and created databases for each. See the [DDL](bootstrap/prod-iyiye-rds-cluster.ddl.sql). DynamoDB tables are out of scope.
 
 ## See Also
 

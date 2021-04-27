@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS portf.kit (
     `name` VARCHAR(64) NOT NULL,
     `version` VARCHAR(16),
     `description` TINYTEXT,
-    `status` ENUM('active', 'waiting_approval', 'on_hold', 'inactive') NOT NULL,
+    `status` VARCHAR(16) NOT NULL,
     `author_username` VARCHAR(128) NOT NULL COMMENT 'The username of recipe creator',
     `recipe` TEXT NOT NULL,
     `energy` INT NOT NULL COMMENT 'Energy in kcal',

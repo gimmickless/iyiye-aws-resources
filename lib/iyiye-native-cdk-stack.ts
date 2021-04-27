@@ -35,7 +35,7 @@ export class IyiyeNativeCdkStack extends Stack {
     const dataStack = new DataNestedStack(this, 'DataNestedStack', {
       rdsVpc: networkStack.vpc,
       rdsVpcSecurityGroups: [networkStack.rdsSecurityGroup],
-      rdsDbClusterIdentifier: `${process.env.ENVIRONMENT}-${applicationNamingPrefix}-rds-cluster-1`,
+      rdsDbClusterIdentifier: `${process.env.ENVIRONMENT}-${applicationNamingPrefix}-rds-cluster`,
       categoryTableName: `${process.env.ENVIRONMENT}.${applicationNamingPrefix}.kit_category`
     })
 

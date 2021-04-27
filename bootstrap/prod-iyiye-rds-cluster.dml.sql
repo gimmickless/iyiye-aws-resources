@@ -1,5 +1,7 @@
+/*
 INSERT IGNORE INTO notif.in_app_notifications (`type`, `receiver_username`, `body`) VALUES
     ('announcement', 'vahdet', 'This is gospel, this is a test');
+*/
 
 INSERT IGNORE INTO portf.category (`name`,`image_url`) VALUES 
     ('burger','https://iyiye-meta-files.s3-eu-west-1.amazonaws.com/images/category/burger.jpg'),
