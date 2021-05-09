@@ -223,7 +223,7 @@ export class CognitoNestedStack extends NestedStack {
         }
       }),
       inlinePolicies: {
-        iyiyeUnauthIdentityPoolRolePolicy: new PolicyDocument({
+        iyiyeAuthIdentityPoolRolePolicy: new PolicyDocument({
           statements: [
             new PolicyStatement({
               effect: Effect.ALLOW,
@@ -238,7 +238,10 @@ export class CognitoNestedStack extends NestedStack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['s3:PutObject'],
-              resources: [`${props.userFilesBucketArn}/uploads/*`]
+              resources: [
+                `${props.userFilesBucketArn}/uploads/*`,
+                `${props.userFilesBucketArn}/protected/*`
+              ]
             }),
             new PolicyStatement({
               effect: Effect.ALLOW,
