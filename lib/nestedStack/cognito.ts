@@ -22,6 +22,7 @@ import { awsCognitoCustomAttributeMaxLength } from '../constants'
 interface CognitoNestedStackProps extends NestedStackProps {
   userPoolName: string
   userPoolClientName: string
+  userPoolNativeClientName: string
   defaultUserPoolGroupName: string
   adminUserPoolGroupName: string
   identityPoolName: string
@@ -98,6 +99,16 @@ export class CognitoNestedStack extends NestedStack {
       generateSecret: false,
       userPool: this.userPool
     })
+
+    const userPoolNativeClient = new UserPoolClient(
+      this,
+      'UserPoolNativeClient',
+      {
+        userPoolClientName: props.userPoolNativeClientName,
+        generateSecret: true,
+        userPool: this.userPool
+      }
+    )
 
     // User Groups
     const defaultUserGroupRole = new Role(this, 'DefaultUserGroupRole', {

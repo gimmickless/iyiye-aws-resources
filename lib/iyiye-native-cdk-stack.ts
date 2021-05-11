@@ -24,6 +24,7 @@ export class IyiyeNativeCdkStack extends Stack {
     const cognitoStack = new CognitoNestedStack(this, 'CognitoNestedStack', {
       userPoolName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up`,
       userPoolClientName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up-cl`,
+      userPoolNativeClientName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up-ncl`,
       defaultUserPoolGroupName: 'default-ug',
       adminUserPoolGroupName: 'admin-ug',
       identityPoolName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-ip`,
