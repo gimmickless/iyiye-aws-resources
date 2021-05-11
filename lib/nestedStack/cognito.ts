@@ -71,6 +71,7 @@ export class CognitoNestedStack extends NestedStack {
         theme: new StringAttribute({ mutable: true, maxLen: 8 }),
         bio: new StringAttribute({ mutable: true }),
         contactable: new StringAttribute({ mutable: true, maxLen: 5 }), // BooleanAttribute is not supported with Amplify
+        identityId: new StringAttribute({ mutable: true }),
         address1: new StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
