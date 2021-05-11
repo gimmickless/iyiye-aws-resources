@@ -37,6 +37,7 @@ export class StorageNestedStack extends NestedStack {
     this.userFilesBucket = new Bucket(this, 'UserFilesBucket', {
       bucketName: props.userFilesBucketName,
       removalPolicy: RemovalPolicy.RETAIN,
+      versioned: true,
       cors: [
         {
           allowedOrigins: ['*'],
