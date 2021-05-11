@@ -161,6 +161,10 @@ export class CognitoNestedStack extends NestedStack {
         {
           clientId: userPoolClient.userPoolClientId,
           providerName: this.userPool.userPoolProviderName
+        },
+        {
+          clientId: userPoolNativeClient.userPoolClientId,
+          providerName: this.userPool.userPoolProviderName
         }
       ]
     })
