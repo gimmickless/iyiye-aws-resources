@@ -19,12 +19,12 @@ interface DataNestedStackProps extends NestedStackProps {
   rdsVpc: IVpc
   rdsVpcSecurityGroups: Array<SecurityGroup>
   rdsDbClusterIdentifier: string
-  categoryTableName: string
+  // categoryTableName: string
 }
 
 export class DataNestedStack extends NestedStack {
   // Properties
-  readonly kitCategoryTable: DynamoDbTable
+  // readonly kitCategoryTable: DynamoDbTable
   readonly dbSecret: DatabaseSecret
   readonly shoppingCartTable: DynamoDbTable
   readonly databaseCluster: RdsDBCluster
@@ -33,17 +33,17 @@ export class DataNestedStack extends NestedStack {
     super(scope, id, props)
 
     // DynamoDB
-    this.kitCategoryTable = new DynamoDbTable(this, 'KitCategoryTable', {
-      tableName: props.categoryTableName,
-      partitionKey: { name: 'name', type: AttributeType.STRING },
-      readCapacity: 1,
-      writeCapacity: 1
-    })
-    Tags.of(this.kitCategoryTable).add('name', props.categoryTableName)
-    Tags.of(this.kitCategoryTable).add(
-      'environment',
-      process.env.ENVIRONMENT ?? ''
-    )
+    // this.kitCategoryTable = new DynamoDbTable(this, 'KitCategoryTable', {
+    //   tableName: props.categoryTableName,
+    //   partitionKey: { name: 'name', type: AttributeType.STRING },
+    //   readCapacity: 1,
+    //   writeCapacity: 1
+    // })
+    // Tags.of(this.kitCategoryTable).add('name', props.categoryTableName)
+    // Tags.of(this.kitCategoryTable).add(
+    //   'environment',
+    //   process.env.ENVIRONMENT ?? ''
+    // )
 
     // RDS
     this.dbSecret = new DatabaseSecret(this, 'AuroraRdsSecret', {
@@ -63,7 +63,7 @@ export class DataNestedStack extends NestedStack {
       credentials: Credentials.fromSecret(this.dbSecret),
       securityGroups: props.rdsVpcSecurityGroups,
       vpcSubnets: props.rdsVpc.selectSubnets({
-        subnetType: SubnetType.PRIVATE
+        subnetType: SubnetType.ISOLATED
       }),
       scaling: {
         autoPause: Duration.minutes(5),
