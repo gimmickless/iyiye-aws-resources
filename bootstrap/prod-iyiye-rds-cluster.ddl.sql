@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS portf.price (
     INDEX `kit_id_index` (`kit_id`),
     INDEX `value_index` (`value`),
     UNIQUE KEY `unique_kit_id_value_currency` (`kit_id`,`value`,`currency`),
-    FOREIGN KEY (`kit_id`) REFERENCES kit(`id`)
+    FOREIGN KEY (`kit_id`) REFERENCES portf.kit(`id`)
 );
 
 CREATE TABLE IF NOT EXISTS portf.ingredient (
@@ -82,8 +82,8 @@ CREATE TABLE IF NOT EXISTS portf.kit_category_rel (
     INDEX `category_id_index` (`category_id`),
     INDEX `kit_id_index` (`kit_id`),
     UNIQUE KEY `unique_category_kit_ids` (`category_id`,`kit_id`),
-    FOREIGN KEY (`category_id`) REFERENCES category(`id`),
-    FOREIGN KEY (`kit_id`) REFERENCES kit(`id`)
+    FOREIGN KEY (`category_id`) REFERENCES portf.category(`id`),
+    FOREIGN KEY (`kit_id`) REFERENCES portf.kit(`id`)
 );
 
 CREATE TABLE IF NOT EXISTS portf.kit_ingredient_rel (
@@ -94,8 +94,8 @@ CREATE TABLE IF NOT EXISTS portf.kit_ingredient_rel (
     INDEX `kit_id_index` (`kit_id`),
     INDEX `ingredient_id_index` (`ingredient_id`),
     UNIQUE KEY `unique_kit_ingredient_ids` (`kit_id`,`ingredient_id`),
-    FOREIGN KEY (`kit_id`) REFERENCES kit(`id`),
-    FOREIGN KEY (`ingredient_id`) REFERENCES price(`id`)
+    FOREIGN KEY (`kit_id`) REFERENCES portf.kit(`id`),
+    FOREIGN KEY (`ingredient_id`) REFERENCES portf.price(`id`)
 );
 
 /* User Interactions DB (Like, Comment, Comment, Flag) */
