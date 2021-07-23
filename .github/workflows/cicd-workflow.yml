@@ -5,7 +5,7 @@ on:
       - "published"
 env:
   REGION: eu-west-1
-  CDK_VERSION: "1.86.0"
+  CDK_VERSION: "1.115.0"
 jobs:
   build-and-deploy:
     name: Build And Deploy
