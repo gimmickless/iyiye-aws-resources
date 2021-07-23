@@ -71,7 +71,7 @@ export class PipelineNestedStack extends NestedStack {
     const defaultPipelineProjectProps: PipelineProjectProps = {
       buildSpec: BuildSpec.fromSourceFilename('buildspec.yml'),
       environment: {
-        buildImage: LinuxBuildImage.STANDARD_4_0,
+        buildImage: LinuxBuildImage.STANDARD_5_0,
         computeType: ComputeType.SMALL,
         environmentVariables: {
           LAMBDA_ARTIFACT_STORE_BUCKET: {
