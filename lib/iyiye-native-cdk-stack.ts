@@ -9,6 +9,7 @@ import { AppsyncNestedStack } from './nestedStack/appsync'
 
 const applicationNamingPrefix = 'iyiye'
 const userFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`
+const kitQueryFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-kit-query`
 const rdsDatabaseNames = {
   notification: 'notif'
 }
@@ -42,12 +43,14 @@ export class IyiyeNativeCdkStack extends Stack {
 
     new PipelineNestedStack(this, 'PipelineNestedStack', {
       lambda: {
-        userFuncName: userFuncName
+        userFuncName: userFuncName,
+        kitQueryFuncName: kitQueryFuncName
       },
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       github: {
         functionReposOwnerName: 'gimmickless',
-        userFunctionRepoName: 'user-function'
+        userFunctionRepoName: 'user-function',
+        kitQueryFunctionRepoName: 'kit-query-function'
       },
       rds: {
         dbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,

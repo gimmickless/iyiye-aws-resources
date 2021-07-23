@@ -28,11 +28,13 @@ import { defaultGitHubBranch } from '../constants'
 interface PipelineNestedStackProps extends NestedStackProps {
   lambda: {
     userFuncName: string
+    kitQueryFuncName: string
   }
   cognitoUserPoolId: string
   github: {
     functionReposOwnerName: string
     userFunctionRepoName: string
+    kitQueryFunctionRepoName: string
   }
   artifactStoreBucketName: string
   rds: {
@@ -49,6 +51,10 @@ export class PipelineNestedStack extends NestedStack {
       this,
       `UserFuncPipelineBuildProjectLogGroup`
     )
+    const kitQueryFuncPipelineBuildProjectLogGroup = new LogGroup(
+      this,
+      `KitQueryFuncPipelineBuildProjectLogGroup`
+    )
 
     const pipelineArtifactStoreBucket = new Bucket(
       this,
@@ -63,7 +69,6 @@ export class PipelineNestedStack extends NestedStack {
 
     // default pipeline
     const defaultPipelineProjectProps: PipelineProjectProps = {
-      projectName: `${process.env.APPLICATION}-user-fn-bp`,
       buildSpec: BuildSpec.fromSourceFilename('buildspec.yml'),
       environment: {
         buildImage: LinuxBuildImage.STANDARD_4_0,
@@ -74,24 +79,42 @@ export class PipelineNestedStack extends NestedStack {
           }
         }
       },
-      timeout: Duration.minutes(10),
-      logging: {
-        cloudWatch: {
-          logGroup: userFuncPipelineBuildProjectLogGroup
-        }
-      }
+      timeout: Duration.minutes(10)
     }
 
     // Pipeline Projects
     const userFuncPipelineBuildProject = new PipelineProject(
       this,
       'UserFuncPipelineBuildProject',
-      defaultPipelineProjectProps
+      {
+        ...defaultPipelineProjectProps,
+        projectName: `${process.env.APPLICATION}-user-fn-bp`,
+        logging: {
+          cloudWatch: {
+            logGroup: userFuncPipelineBuildProjectLogGroup
+          }
+        }
+      }
+    )
+    const kitQueryFuncPipelineBuildProject = new PipelineProject(
+      this,
+      'KitQueryFuncPipelineBuildProject',
+      {
+        ...defaultPipelineProjectProps,
+        projectName: `${process.env.APPLICATION}-kit-query-fn-bp`,
+        logging: {
+          cloudWatch: {
+            logGroup: kitQueryFuncPipelineBuildProjectLogGroup
+          }
+        }
+      }
     )
 
     // Artifacts
     const userFuncSourceOutput = new Artifact('CUSrc')
     const userFuncBuildOutput = new Artifact('CUBld')
+    const kitQueryFuncSourceOutput = new Artifact('KQSrc')
+    const kitQueryFuncBuildOutput = new Artifact('KQBld')
 
     // Pipelines
     new Pipeline(this, 'UserFuncPipeline', {
@@ -149,6 +172,68 @@ export class PipelineNestedStack extends NestedStack {
                 Application: process.env.APPLICATION as string
               },
               extraInputs: [userFuncBuildOutput],
+              replaceOnFailure: true
+            })
+          ]
+        }
+      ]
+    })
+    new Pipeline(this, 'KitQueryFuncPipeline', {
+      pipelineName: `${process.env.APPLICATION}-kit-query-fn-pl`,
+      crossAccountKeys: false,
+      artifactBucket: pipelineArtifactStoreBucket,
+      restartExecutionOnUpdate: true,
+      stages: [
+        {
+          stageName: 'Source',
+          actions: [
+            new GitHubSourceAction({
+              actionName: 'FetchSource',
+              owner: props.github.functionReposOwnerName,
+              repo: props.github.kitQueryFunctionRepoName,
+              branch: defaultGitHubBranch,
+              oauthToken: SecretValue.secretsManager(
+                process.env.GITHUB_TOKEN_SECRET_ID ?? '',
+                {
+                  jsonField: 'token'
+                }
+              ),
+              trigger: GitHubTrigger.WEBHOOK,
+              output: kitQueryFuncSourceOutput
+            })
+          ]
+        },
+        {
+          stageName: 'Build',
+          actions: [
+            new CodeBuildAction({
+              actionName: 'BuildFunction',
+              input: kitQueryFuncSourceOutput,
+              outputs: [kitQueryFuncBuildOutput],
+              project: kitQueryFuncPipelineBuildProject
+            })
+          ]
+        },
+        {
+          stageName: 'Deploy',
+          actions: [
+            new CloudFormationCreateUpdateStackAction({
+              actionName: 'DeployFunction',
+              stackName: `${process.env.APPLICATION}-kit-query-fn-stack`,
+              adminPermissions: true,
+              cfnCapabilities: [
+                CfnCapabilities.AUTO_EXPAND,
+                CfnCapabilities.NAMED_IAM
+              ],
+              templatePath: kitQueryFuncBuildOutput.atPath(
+                'output-template.yml'
+              ),
+              parameterOverrides: {
+                FunctionName: props.lambda.kitQueryFuncName,
+                Environment: process.env.ENVIRONMENT as string,
+                Application: process.env.APPLICATION as string
+              },
+              extraInputs: [kitQueryFuncBuildOutput],
               replaceOnFailure: true
             })
           ]
