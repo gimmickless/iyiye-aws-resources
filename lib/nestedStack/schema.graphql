@@ -99,8 +99,8 @@ type Kit
   diets: String # Comma-separated list
   recipe: String!
   price: Float!
-  calorie: Number
-  prepTime: Number! # Minutes
+  calorie: Int
+  prepTime: Int! # Minutes
   proposeTime: AWSTimestamp
   approverUsername: ID
   approveTime: AWSTimestamp
