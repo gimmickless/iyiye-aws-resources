@@ -11,7 +11,12 @@ const applicationNamingPrefix = 'iyiye'
 const userFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`
 const kitQueryFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-kit-query`
 const rdsDatabaseNames = {
-  notification: 'notif'
+  notification: 'notif',
+  portfolio: 'portf',
+  userInteractions: 'uintr',
+  warehouse: 'whs',
+  order: 'order',
+  delivery: 'deliv'
 }
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -63,12 +68,14 @@ export class IyiyeNativeCdkStack extends Stack {
       appsyncApiName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       lambda: {
-        userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`
+        userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`,
+        kitQueryFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${kitQueryFuncName}`
       },
       rds: {
         dbCluster: dataStack.databaseCluster,
         dbCredentialsSecretStore: dataStack.dbSecret,
-        notificationDbName: rdsDatabaseNames.notification
+        notificationDbName: rdsDatabaseNames.notification,
+        portfolioDbName: rdsDatabaseNames.portfolio
       }
     })
   }

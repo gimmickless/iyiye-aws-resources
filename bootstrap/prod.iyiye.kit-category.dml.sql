@@ -1,1 +1,0 @@
--- INSERT INTO "prod.iyiye.kit_category" value {'name' : 'burger', 'imageUrl' : 'https://iyiye-meta-files.s3-eu-west-1.amazonaws.com/images/category/burger.jpg'}

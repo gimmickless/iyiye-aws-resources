@@ -1,5 +1,5 @@
 /*
-INSERT IGNORE INTO notif.in_app_notifications (`type`, `receiver_username`, `body`) VALUES
+INSERT IGNORE INTO notif.in_app_notification (`type`, `receiver_username`, `body`) VALUES
     ('announcement', 'vahdet', 'This is gospel, this is a test');
 */
 

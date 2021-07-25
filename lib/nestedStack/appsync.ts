@@ -12,18 +12,23 @@ import { Function } from '@aws-cdk/aws-lambda'
 import { IServerlessCluster } from '@aws-cdk/aws-rds'
 import { ISecret } from '@aws-cdk/aws-secretsmanager'
 import { notifDbInAppNotificationsTableName } from '../constants'
-import { selectNotifDbInAppNotifications } from '../generic-queries'
+import {
+  selectNotifDbInAppNotifications,
+  selectPortfDbKitCategories
+} from '../generic-queries'
 
 interface AppsyncNestedStackProps extends NestedStackProps {
   appsyncApiName: string
   cognitoUserPoolId: string
   lambda: {
     userFuncArn: string
+    kitQueryFuncArn: string
   }
   rds: {
     dbCluster: IServerlessCluster
     dbCredentialsSecretStore: ISecret
     notificationDbName: string
+    portfolioDbName: string
   }
 }
 
@@ -58,7 +63,7 @@ export class AppsyncNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: AppsyncNestedStackProps) {
     super(scope, id, props)
 
-    const graphQlApi = new GraphqlApi(this, 'AppsyncApi', {
+    const graphqlApi = new GraphqlApi(this, 'AppsyncApi', {
       name: props.appsyncApiName,
       schema: Schema.fromAsset(join(__dirname, 'schema.graphql')),
       authorizationConfig: {
@@ -71,7 +76,12 @@ export class AppsyncNestedStack extends NestedStack {
               props.cognitoUserPoolId
             )
           }
-        }
+        },
+        additionalAuthorizationModes: [
+          {
+            authorizationType: AuthorizationType.IAM
+          }
+        ]
       },
       logConfig: {
         fieldLogLevel: FieldLogLevel.ERROR
@@ -79,7 +89,7 @@ export class AppsyncNestedStack extends NestedStack {
     })
 
     // Data Sources
-    const userFuncDS = graphQlApi.addLambdaDataSource(
+    const userFuncDS = graphqlApi.addLambdaDataSource(
       'UserFunc',
       Function.fromFunctionArn(
         this,
@@ -87,23 +97,73 @@ export class AppsyncNestedStack extends NestedStack {
         props.lambda.userFuncArn
       )
     )
-
-    const notificationRdsDS = graphQlApi.addRdsDataSource(
+    const kitQueryFuncDS = graphqlApi.addLambdaDataSource(
+      'KitQueryFunc',
+      Function.fromFunctionArn(
+        this,
+        'AppsyncKitQueryFunc',
+        props.lambda.kitQueryFuncArn
+      )
+    )
+    const notificationRdsDS = graphqlApi.addRdsDataSource(
       'NotificationRds',
       props.rds.dbCluster,
       props.rds.dbCredentialsSecretStore,
       props.rds.notificationDbName
     )
+    const portfolioRdsDS = graphqlApi.addRdsDataSource(
+      'PortfolioRds',
+      props.rds.dbCluster,
+      props.rds.dbCredentialsSecretStore,
+      props.rds.portfolioDbName
+    )
 
-    // Resolvers
+    // User Resolvers
     userFuncDS.createResolver({
       typeName: 'Query',
-      fieldName: 'getUserBasicInfo'
+      fieldName: 'userBasicInfo'
     })
 
+    // Portfolio Resolvers
+    portfolioRdsDS.createResolver({
+      typeName: 'Query',
+      fieldName: 'kitCategoryList',
+      requestMappingTemplate: MappingTemplate.fromString(`
+      #set ($statement = "
+        ${selectPortfDbKitCategories}
+        Order By name
+      ")
+      {
+        "version": "2018-05-29",
+        "statements": [
+          $util.toJson($statement)
+        ]
+      }`),
+      responseMappingTemplate: MappingTemplate.fromString(
+        rdsListResponseMappingTemplate
+      )
+    })
+    kitQueryFuncDS.createResolver({
+      typeName: 'Query',
+      fieldName: 'curatedKitList'
+    })
+    kitQueryFuncDS.createResolver({
+      typeName: 'Query',
+      fieldName: 'faveKitList'
+    })
+    kitQueryFuncDS.createResolver({
+      typeName: 'Query',
+      fieldName: 'recentlyOrderedKitList'
+    })
+    kitQueryFuncDS.createResolver({
+      typeName: 'Query',
+      fieldName: 'newlyAddedKitList'
+    })
+
+    // Notification Resolvers
     notificationRdsDS.createResolver({
       typeName: 'Query',
-      fieldName: 'listInAppNotificationsForUser',
+      fieldName: 'inAppNotificationList',
       requestMappingTemplate: MappingTemplate.fromString(`
       #set ($statement = "
         ${selectNotifDbInAppNotifications}

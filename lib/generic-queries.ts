@@ -1,4 +1,7 @@
-import { notifDbInAppNotificationsTableName } from './constants'
+import {
+  notifDbInAppNotificationsTableName,
+  portfDbCategoriesTableName
+} from './constants'
 
 export const selectNotifDbInAppNotifications = `
 Select
@@ -10,4 +13,11 @@ Select
   DATE_FORMAT(created_time, '%Y-%m-%dT%H:%i:%sZ') As createdTime,
   DATE_FORMAT(last_updated_time, '%Y-%m-%dT%H:%i:%sZ') As lastUpdatedTime
   From ${notifDbInAppNotificationsTableName}
+`
+export const selectPortfDbKitCategories = `
+Select
+  id,
+  name,
+  image_url As imageUrl
+  From ${portfDbCategoriesTableName}
 `

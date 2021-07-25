@@ -1,7 +1,7 @@
 /* Notification DB */
 
 CREATE DATABASE IF NOT EXISTS notif;
-CREATE TABLE IF NOT EXISTS notif.in_app_notifications (
+CREATE TABLE IF NOT EXISTS notif.in_app_notification (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `type` VARCHAR(16) NOT NULL,
     `receiver_username` VARCHAR(128) NOT NULL COMMENT 'The username of target user',
