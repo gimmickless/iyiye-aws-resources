@@ -1,5 +1,6 @@
-import { Vpc, SubnetType, SecurityGroup } from '@aws-cdk/aws-ec2'
+import { Vpc, SubnetType, SecurityGroup, Port, Peer } from '@aws-cdk/aws-ec2'
 import { Construct, NestedStack, NestedStackProps } from '@aws-cdk/core'
+import { mySqlAccessorCidrIp, mySqlDefaultPort } from '../constants'
 
 interface NetworkNestedStackProps extends NestedStackProps {}
 
@@ -38,5 +39,11 @@ export class NetworkNestedStack extends NestedStack {
       vpc: this.vpc,
       allowAllOutbound: true
     })
+
+    this.rdsSecurityGroup.addIngressRule(
+      Peer.ipv4(mySqlAccessorCidrIp),
+      Port.tcp(mySqlDefaultPort),
+      'Redshift Ingress1'
+    )
   }
 }
