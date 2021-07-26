@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS notif.in_app_notification (
 /* Portfolio DB */
 CREATE DATABASE IF NOT EXISTS portf;
 
-CREATE TABLE IF NOT EXISTS portf.category (
+CREATE TABLE IF NOT EXISTS portf.kit_category (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(64) NOT NULL COMMENT 'The short, camelCase, code-like field based on the corresponding English name',
     `image_url` VARCHAR(2048),
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS portf.kit_category_rel (
     INDEX `category_id_index` (`category_id`),
     INDEX `kit_id_index` (`kit_id`),
     UNIQUE KEY `unique_category_kit_ids` (`category_id`,`kit_id`),
-    FOREIGN KEY (`category_id`) REFERENCES portf.category(`id`),
+    FOREIGN KEY (`category_id`) REFERENCES portf.kit_category(`id`),
     FOREIGN KEY (`kit_id`) REFERENCES portf.kit(`id`)
 );
 

@@ -3,7 +3,7 @@ INSERT IGNORE INTO notif.in_app_notification (`type`, `receiver_username`, `body
     ('announcement', 'vahdet', 'This is gospel, this is a test');
 */
 
-INSERT IGNORE INTO portf.category (`name`,`image_url`) VALUES 
+INSERT IGNORE INTO portf.kit_category (`name`,`image_url`) VALUES 
     ('burger','https://iyiye-meta-files.s3-eu-west-1.amazonaws.com/images/category/burger.jpg'),
     ('chicken','https://iyiye-meta-files.s3-eu-west-1.amazonaws.com/images/category/chicken.jpg'),
     ('dessert','https://iyiye-meta-files.s3-eu-west-1.amazonaws.com/images/category/dessert.jpg'),

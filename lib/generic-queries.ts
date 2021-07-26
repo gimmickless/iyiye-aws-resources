@@ -1,6 +1,6 @@
 import {
   notifDbInAppNotificationsTableName,
-  portfDbCategoriesTableName
+  portfDbKitCategoriesTableName
 } from './constants'
 
 export const selectNotifDbInAppNotifications = `
@@ -19,5 +19,5 @@ Select
   id,
   name,
   image_url As imageUrl
-  From ${portfDbCategoriesTableName}
+  From ${portfDbKitCategoriesTableName}
 `

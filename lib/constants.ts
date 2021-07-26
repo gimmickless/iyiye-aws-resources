@@ -8,4 +8,4 @@ export const defaultGitHubBranch = 'main'
 
 export const notifDbInAppNotificationsTableName = 'notif.in_app_notification'
 
-export const portfDbCategoriesTableName = 'portf.category'
+export const portfDbKitCategoriesTableName = 'portf.kit_category'

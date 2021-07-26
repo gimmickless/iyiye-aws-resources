@@ -37,6 +37,28 @@ To create it
 
 TBD
 
+## MySQL Database Queries
+
+Show schemas and tables:
+
+```sql
+SHOW SCHEMAS; -- synonym: SHOW DATABASES;
+SHOW TABLES FROM notif;
+SHOW TABLES FROM portf;
+SHOW TABLES FROM uintr;
+SHOW TABLES FROM whs;
+SHOW TABLES FROM order;
+SHOW TABLES FROM deliv;
+```
+
+Show table contents:
+
+```sql
+SELECT * FROM notif.in_app_notification;
+SELECT * From portf.kit_category;
+SELECT * From portf.kit;
+```
+
 ## Apology
 
 ### Database per Service
