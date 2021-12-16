@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import '../env'
 import 'source-map-support/register'
-import { App, Tags } from '@aws-cdk/core'
+import { App, Tags } from 'aws-cdk-lib'
 import { IyiyeNativeCdkStack } from '../lib/iyiye-native-cdk-stack'
 
 const app = new App()

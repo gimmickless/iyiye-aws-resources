@@ -1,22 +1,5 @@
-import {
-  AccountRecovery,
-  CfnIdentityPool,
-  CfnIdentityPoolRoleAttachment,
-  CfnUserPoolGroup,
-  Mfa,
-  StringAttribute,
-  UserPool,
-  UserPoolClient
-} from '@aws-cdk/aws-cognito'
-import {
-  Effect,
-  ManagedPolicy,
-  PolicyDocument,
-  PolicyStatement,
-  Role,
-  WebIdentityPrincipal
-} from '@aws-cdk/aws-iam'
-import { Construct, NestedStack, NestedStackProps } from '@aws-cdk/core'
+import { Construct } from 'constructs'
+import { NestedStack, NestedStackProps, aws_cognito as cognito, aws_iam as iam } from 'aws-cdk-lib'
 import { awsCognitoCustomAttributeMaxLength } from '../constants'
 
 interface CognitoNestedStackProps extends NestedStackProps {
@@ -31,20 +14,20 @@ interface CognitoNestedStackProps extends NestedStackProps {
 
 export class CognitoNestedStack extends NestedStack {
   // Properties
-  readonly userPool: UserPool
+  readonly userPool: cognito.UserPool
 
   // Constructor
   constructor(scope: Construct, id: string, props: CognitoNestedStackProps) {
     super(scope, id, props)
 
     // User Pool
-    this.userPool = new UserPool(this, 'UserPool', {
+    this.userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: props.userPoolName,
-      accountRecovery: AccountRecovery.EMAIL_ONLY,
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       autoVerify: {
         email: true
       },
-      mfa: Mfa.OFF,
+      mfa: cognito.Mfa.OFF,
       passwordPolicy: {
         minLength: 8,
         requireDigits: true,
@@ -68,58 +51,54 @@ export class CognitoNestedStack extends NestedStack {
         lastUpdateTime: { required: false }
       },
       customAttributes: {
-        theme: new StringAttribute({ mutable: true, maxLen: 8 }),
-        bio: new StringAttribute({ mutable: true }),
-        contactable: new StringAttribute({ mutable: true, maxLen: 5 }), // BooleanAttribute is not supported with Amplify
-        identityId: new StringAttribute({ mutable: true }),
-        address1: new StringAttribute({
+        theme: new cognito.StringAttribute({ mutable: true, maxLen: 8 }),
+        bio: new cognito.StringAttribute({ mutable: true }),
+        contactable: new cognito.StringAttribute({ mutable: true, maxLen: 5 }), // BooleanAttribute is not supported with Amplify
+        identityId: new cognito.StringAttribute({ mutable: true }),
+        address1: new cognito.StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        address2: new StringAttribute({
+        address2: new cognito.StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        address3: new StringAttribute({
+        address3: new cognito.StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        address4: new StringAttribute({
+        address4: new cognito.StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         }),
-        address5: new StringAttribute({
+        address5: new cognito.StringAttribute({
           mutable: true,
           maxLen: awsCognitoCustomAttributeMaxLength
         })
       }
     })
 
-    const userPoolClient = new UserPoolClient(this, 'UserPoolClient', {
+    const userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
       userPoolClientName: props.userPoolClientName,
       generateSecret: false,
       userPool: this.userPool
     })
 
-    const userPoolNativeClient = new UserPoolClient(
-      this,
-      'UserPoolNativeClient',
-      {
-        userPoolClientName: props.userPoolNativeClientName,
-        generateSecret: true,
-        userPool: this.userPool
-      }
-    )
+    const userPoolNativeClient = new cognito.UserPoolClient(this, 'UserPoolNativeClient', {
+      userPoolClientName: props.userPoolNativeClientName,
+      generateSecret: true,
+      userPool: this.userPool
+    })
 
     // User Groups
-    const defaultUserGroupRole = new Role(this, 'DefaultUserGroupRole', {
-      assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+    const defaultUserGroupRole = new iam.Role(this, 'DefaultUserGroupRole', {
+      assumedBy: new iam.WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': this.userPool.userPoolId
         }
       }),
       managedPolicies: [
-        ManagedPolicy.fromManagedPolicyArn(
+        iam.ManagedPolicy.fromManagedPolicyArn(
           this,
           'DefaultUserGroupRoleAppSyncPolicy',
           'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
@@ -127,14 +106,14 @@ export class CognitoNestedStack extends NestedStack {
       ]
     })
 
-    const adminUserGroupRole = new Role(this, 'AdminUserGroupRole', {
-      assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+    const adminUserGroupRole = new iam.Role(this, 'AdminUserGroupRole', {
+      assumedBy: new iam.WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': this.userPool.userPoolId
         }
       }),
       managedPolicies: [
-        ManagedPolicy.fromManagedPolicyArn(
+        iam.ManagedPolicy.fromManagedPolicyArn(
           this,
           'AdminUserGroupRoleAppSyncPolicy',
           'arn:aws:iam::aws:policy/AWSAppSyncInvokeFullAccess'
@@ -142,20 +121,20 @@ export class CognitoNestedStack extends NestedStack {
       ]
     })
 
-    new CfnUserPoolGroup(this, 'DefaultUserGroup', {
+    new cognito.CfnUserPoolGroup(this, 'DefaultUserGroup', {
       userPoolId: this.userPool.userPoolId,
       groupName: props.defaultUserPoolGroupName,
       roleArn: defaultUserGroupRole.roleArn
     })
 
-    new CfnUserPoolGroup(this, 'AdminUserGroup', {
+    new cognito.CfnUserPoolGroup(this, 'AdminUserGroup', {
       userPoolId: this.userPool.userPoolId,
       groupName: props.adminUserPoolGroupName,
       roleArn: adminUserGroupRole.roleArn
     })
 
     // Identity Pools
-    const identityPool = new CfnIdentityPool(this, 'IdentityPool', {
+    const identityPool = new cognito.CfnIdentityPool(this, 'IdentityPool', {
       identityPoolName: props.identityPoolName,
       allowUnauthenticatedIdentities: true,
       cognitoIdentityProviders: [
@@ -170,8 +149,8 @@ export class CognitoNestedStack extends NestedStack {
       ]
     })
 
-    const unauthIdentityPoolRole = new Role(this, 'UnauthIdentityPoolRole', {
-      assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+    const unauthIdentityPoolRole = new iam.Role(this, 'UnauthIdentityPoolRole', {
+      assumedBy: new iam.WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': identityPool.ref
         },
@@ -180,57 +159,50 @@ export class CognitoNestedStack extends NestedStack {
         }
       }),
       inlinePolicies: {
-        iyiyeUnauthIdentityPoolRolePolicy: new PolicyDocument({
+        iyiyeUnauthIdentityPoolRolePolicy: new iam.PolicyDocument({
           statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:GetObject'],
               resources: [`${props.userFilesBucketArn}/protected/*`]
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:PutObject'],
               resources: [`${props.userFilesBucketArn}/uploads/*`]
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:ListBucket'],
               resources: [`${props.userFilesBucketArn}`],
               conditions: {
                 StringLike: {
-                  's3:prefix': [
-                    'public/',
-                    'public/*',
-                    'protected/',
-                    'protected/*'
-                  ]
+                  's3:prefix': ['public/', 'public/*', 'protected/', 'protected/*']
                 }
               }
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
               resources: [`${props.userFilesBucketArn}/public/*`]
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['appsync:GraphQL'],
               resources: [`arn:aws:appsync:${this.region}:*:apis/*`]
             }),
-            new PolicyStatement({
-              effect: Effect.DENY,
+            new iam.PolicyStatement({
+              effect: iam.Effect.DENY,
               actions: ['appsync:GraphQL'],
-              resources: [
-                `arn:aws:appsync:${this.region}:*:apis/*/types/Mutation/*`
-              ]
+              resources: [`arn:aws:appsync:${this.region}:*:apis/*/types/Mutation/*`]
             })
           ]
         })
       }
     })
 
-    const authIdentityPoolRole = new Role(this, 'AuthIdentityPoolRole', {
-      assumedBy: new WebIdentityPrincipal('cognito-identity.amazonaws.com', {
+    const authIdentityPoolRole = new iam.Role(this, 'AuthIdentityPoolRole', {
+      assumedBy: new iam.WebIdentityPrincipal('cognito-identity.amazonaws.com', {
         StringEquals: {
           'cognito-identity.amazonaws.com:aud': identityPool.ref
         },
@@ -239,28 +211,25 @@ export class CognitoNestedStack extends NestedStack {
         }
       }),
       inlinePolicies: {
-        iyiyeAuthIdentityPoolRolePolicy: new PolicyDocument({
+        iyiyeAuthIdentityPoolRolePolicy: new iam.PolicyDocument({
           statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['lambda:InvokeFunction'],
               resources: ['*']
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:GetObject'],
               resources: [`${props.userFilesBucketArn}/protected/*`]
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:PutObject'],
-              resources: [
-                `${props.userFilesBucketArn}/uploads/*`,
-                `${props.userFilesBucketArn}/protected/*`
-              ]
+              resources: [`${props.userFilesBucketArn}/uploads/*`, `${props.userFilesBucketArn}/protected/*`]
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:ListBucket'],
               resources: [`${props.userFilesBucketArn}`],
               conditions: {
@@ -276,19 +245,17 @@ export class CognitoNestedStack extends NestedStack {
                 }
               }
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
               resources: [
                 `${props.userFilesBucketArn}/public/*`,
-                props.userFilesBucketArn +
-                  '/protected/${cognito-identity.amazonaws.com:sub}/*',
-                props.userFilesBucketArn +
-                  '/private/${cognito-identity.amazonaws.com:sub}/*'
+                props.userFilesBucketArn + '/protected/${cognito-identity.amazonaws.com:sub}/*',
+                props.userFilesBucketArn + '/private/${cognito-identity.amazonaws.com:sub}/*'
               ]
             }),
-            new PolicyStatement({
-              effect: Effect.ALLOW,
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
               actions: ['appsync:GraphQL'],
               resources: [`arn:aws:appsync:${this.region}:*:apis/*`]
             })
@@ -297,7 +264,7 @@ export class CognitoNestedStack extends NestedStack {
       }
     })
 
-    new CfnIdentityPoolRoleAttachment(this, 'IdentityPoolRoleAttachment', {
+    new cognito.CfnIdentityPoolRoleAttachment(this, 'IdentityPoolRoleAttachment', {
       identityPoolId: identityPool.ref,
       roles: {
         unauthenticated: unauthIdentityPoolRole.roleArn,

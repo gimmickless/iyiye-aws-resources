@@ -1,28 +1,17 @@
+import { Construct } from 'constructs'
 import {
-  BuildSpec,
-  ComputeType,
-  LinuxBuildImage,
-  PipelineProject,
-  PipelineProjectProps
-} from '@aws-cdk/aws-codebuild'
-import { Artifact, Pipeline } from '@aws-cdk/aws-codepipeline'
-import {
-  CloudFormationCreateUpdateStackAction,
-  CodeBuildAction,
-  GitHubSourceAction,
-  GitHubTrigger
-} from '@aws-cdk/aws-codepipeline-actions'
-import { LogGroup } from '@aws-cdk/aws-logs'
-import { Bucket, BucketAccessControl } from '@aws-cdk/aws-s3'
-import {
-  CfnCapabilities,
-  Construct,
-  Duration,
   NestedStack,
   NestedStackProps,
   RemovalPolicy,
-  SecretValue
-} from '@aws-cdk/core'
+  Duration,
+  SecretValue,
+  CfnCapabilities,
+  aws_logs as logs,
+  aws_s3 as s3,
+  aws_codebuild as codebuild,
+  aws_codepipeline as codepipeline,
+  aws_codepipeline_actions as codepipelineactions
+} from 'aws-cdk-lib'
 import { defaultGitHubBranch } from '../constants'
 
 interface PipelineNestedStackProps extends NestedStackProps {
@@ -47,32 +36,22 @@ export class PipelineNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: PipelineNestedStackProps) {
     super(scope, id, props)
 
-    const userFuncPipelineBuildProjectLogGroup = new LogGroup(
-      this,
-      `UserFuncPipelineBuildProjectLogGroup`
-    )
-    const kitQueryFuncPipelineBuildProjectLogGroup = new LogGroup(
-      this,
-      `KitQueryFuncPipelineBuildProjectLogGroup`
-    )
+    const userFuncPipelineBuildProjectLogGroup = new logs.LogGroup(this, `UserFuncPipelineBuildProjectLogGroup`)
+    const kitQueryFuncPipelineBuildProjectLogGroup = new logs.LogGroup(this, `KitQueryFuncPipelineBuildProjectLogGroup`)
 
-    const pipelineArtifactStoreBucket = new Bucket(
-      this,
-      'PipelineArtifactStoreBucket',
-      {
-        bucketName: props.artifactStoreBucketName,
-        accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
-        removalPolicy: RemovalPolicy.RETAIN,
-        versioned: true
-      }
-    )
+    const pipelineArtifactStoreBucket = new s3.Bucket(this, 'PipelineArtifactStoreBucket', {
+      bucketName: props.artifactStoreBucketName,
+      accessControl: s3.BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
+      removalPolicy: RemovalPolicy.RETAIN,
+      versioned: true
+    })
 
     // default pipeline
-    const defaultPipelineProjectProps: PipelineProjectProps = {
-      buildSpec: BuildSpec.fromSourceFilename('buildspec.yml'),
+    const defaultPipelineProjectProps: codebuild.PipelineProjectProps = {
+      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
       environment: {
-        buildImage: LinuxBuildImage.STANDARD_5_0,
-        computeType: ComputeType.SMALL,
+        buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+        computeType: codebuild.ComputeType.SMALL,
         environmentVariables: {
           LAMBDA_ARTIFACT_STORE_BUCKET: {
             value: props.artifactStoreBucketName
@@ -83,41 +62,33 @@ export class PipelineNestedStack extends NestedStack {
     }
 
     // Pipeline Projects
-    const userFuncPipelineBuildProject = new PipelineProject(
-      this,
-      'UserFuncPipelineBuildProject',
-      {
-        ...defaultPipelineProjectProps,
-        projectName: `${process.env.APPLICATION}-user-fn-bp`,
-        logging: {
-          cloudWatch: {
-            logGroup: userFuncPipelineBuildProjectLogGroup
-          }
+    const userFuncPipelineBuildProject = new codebuild.PipelineProject(this, 'UserFuncPipelineBuildProject', {
+      ...defaultPipelineProjectProps,
+      projectName: `${process.env.APPLICATION}-user-fn-bp`,
+      logging: {
+        cloudWatch: {
+          logGroup: userFuncPipelineBuildProjectLogGroup
         }
       }
-    )
-    const kitQueryFuncPipelineBuildProject = new PipelineProject(
-      this,
-      'KitQueryFuncPipelineBuildProject',
-      {
-        ...defaultPipelineProjectProps,
-        projectName: `${process.env.APPLICATION}-kit-query-fn-bp`,
-        logging: {
-          cloudWatch: {
-            logGroup: kitQueryFuncPipelineBuildProjectLogGroup
-          }
+    })
+    const kitQueryFuncPipelineBuildProject = new codebuild.PipelineProject(this, 'KitQueryFuncPipelineBuildProject', {
+      ...defaultPipelineProjectProps,
+      projectName: `${process.env.APPLICATION}-kit-query-fn-bp`,
+      logging: {
+        cloudWatch: {
+          logGroup: kitQueryFuncPipelineBuildProjectLogGroup
         }
       }
-    )
+    })
 
     // Artifacts
-    const userFuncSourceOutput = new Artifact('CUSrc')
-    const userFuncBuildOutput = new Artifact('CUBld')
-    const kitQueryFuncSourceOutput = new Artifact('KQSrc')
-    const kitQueryFuncBuildOutput = new Artifact('KQBld')
+    const userFuncSourceOutput = new codepipeline.Artifact('CUSrc')
+    const userFuncBuildOutput = new codepipeline.Artifact('CUBld')
+    const kitQueryFuncSourceOutput = new codepipeline.Artifact('KQSrc')
+    const kitQueryFuncBuildOutput = new codepipeline.Artifact('KQBld')
 
     // Pipelines
-    new Pipeline(this, 'UserFuncPipeline', {
+    new codepipeline.Pipeline(this, 'UserFuncPipeline', {
       pipelineName: `${process.env.APPLICATION}-user-fn-pl`,
       crossAccountKeys: false,
       artifactBucket: pipelineArtifactStoreBucket,
@@ -126,18 +97,15 @@ export class PipelineNestedStack extends NestedStack {
         {
           stageName: 'Source',
           actions: [
-            new GitHubSourceAction({
+            new codepipelineactions.GitHubSourceAction({
               actionName: 'FetchSource',
               owner: props.github.functionReposOwnerName,
               repo: props.github.userFunctionRepoName,
               branch: defaultGitHubBranch,
-              oauthToken: SecretValue.secretsManager(
-                process.env.GITHUB_TOKEN_SECRET_ID ?? '',
-                {
-                  jsonField: 'token'
-                }
-              ),
-              trigger: GitHubTrigger.WEBHOOK,
+              oauthToken: SecretValue.secretsManager(process.env.GITHUB_TOKEN_SECRET_ID ?? '', {
+                jsonField: 'token'
+              }),
+              trigger: codepipelineactions.GitHubTrigger.WEBHOOK,
               output: userFuncSourceOutput
             })
           ]
@@ -145,7 +113,7 @@ export class PipelineNestedStack extends NestedStack {
         {
           stageName: 'Build',
           actions: [
-            new CodeBuildAction({
+            new codepipelineactions.CodeBuildAction({
               actionName: 'BuildFunction',
               input: userFuncSourceOutput,
               outputs: [userFuncBuildOutput],
@@ -156,14 +124,11 @@ export class PipelineNestedStack extends NestedStack {
         {
           stageName: 'Deploy',
           actions: [
-            new CloudFormationCreateUpdateStackAction({
+            new codepipelineactions.CloudFormationCreateUpdateStackAction({
               actionName: 'DeployFunction',
               stackName: `${process.env.APPLICATION}-user-fn-stack`,
               adminPermissions: true,
-              cfnCapabilities: [
-                CfnCapabilities.AUTO_EXPAND,
-                CfnCapabilities.NAMED_IAM
-              ],
+              cfnCapabilities: [CfnCapabilities.AUTO_EXPAND, CfnCapabilities.NAMED_IAM],
               templatePath: userFuncBuildOutput.atPath('output-template.yml'),
               parameterOverrides: {
                 FunctionName: props.lambda.userFuncName,
@@ -178,7 +143,7 @@ export class PipelineNestedStack extends NestedStack {
         }
       ]
     })
-    new Pipeline(this, 'KitQueryFuncPipeline', {
+    new codepipeline.Pipeline(this, 'KitQueryFuncPipeline', {
       pipelineName: `${process.env.APPLICATION}-kit-query-fn-pl`,
       crossAccountKeys: false,
       artifactBucket: pipelineArtifactStoreBucket,
@@ -187,18 +152,15 @@ export class PipelineNestedStack extends NestedStack {
         {
           stageName: 'Source',
           actions: [
-            new GitHubSourceAction({
+            new codepipelineactions.GitHubSourceAction({
               actionName: 'FetchSource',
               owner: props.github.functionReposOwnerName,
               repo: props.github.kitQueryFunctionRepoName,
               branch: defaultGitHubBranch,
-              oauthToken: SecretValue.secretsManager(
-                process.env.GITHUB_TOKEN_SECRET_ID ?? '',
-                {
-                  jsonField: 'token'
-                }
-              ),
-              trigger: GitHubTrigger.WEBHOOK,
+              oauthToken: SecretValue.secretsManager(process.env.GITHUB_TOKEN_SECRET_ID ?? '', {
+                jsonField: 'token'
+              }),
+              trigger: codepipelineactions.GitHubTrigger.WEBHOOK,
               output: kitQueryFuncSourceOutput
             })
           ]
@@ -206,7 +168,7 @@ export class PipelineNestedStack extends NestedStack {
         {
           stageName: 'Build',
           actions: [
-            new CodeBuildAction({
+            new codepipelineactions.CodeBuildAction({
               actionName: 'BuildFunction',
               input: kitQueryFuncSourceOutput,
               outputs: [kitQueryFuncBuildOutput],
@@ -217,17 +179,12 @@ export class PipelineNestedStack extends NestedStack {
         {
           stageName: 'Deploy',
           actions: [
-            new CloudFormationCreateUpdateStackAction({
+            new codepipelineactions.CloudFormationCreateUpdateStackAction({
               actionName: 'DeployFunction',
               stackName: `${process.env.APPLICATION}-kit-query-fn-stack`,
               adminPermissions: true,
-              cfnCapabilities: [
-                CfnCapabilities.AUTO_EXPAND,
-                CfnCapabilities.NAMED_IAM
-              ],
-              templatePath: kitQueryFuncBuildOutput.atPath(
-                'output-template.yml'
-              ),
+              cfnCapabilities: [CfnCapabilities.AUTO_EXPAND, CfnCapabilities.NAMED_IAM],
+              templatePath: kitQueryFuncBuildOutput.atPath('output-template.yml'),
               parameterOverrides: {
                 FunctionName: props.lambda.kitQueryFuncName,
                 Environment: process.env.ENVIRONMENT as string,

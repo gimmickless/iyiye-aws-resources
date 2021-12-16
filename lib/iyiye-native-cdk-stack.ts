@@ -1,5 +1,6 @@
 // import '../env'
-import { Construct, Stack, StackProps } from '@aws-cdk/core'
+import { Construct } from 'constructs'
+import { Stack, StackProps } from 'aws-cdk-lib'
 import { NetworkNestedStack } from './nestedStack/network'
 import { CognitoNestedStack } from './nestedStack/cognito'
 import { DataNestedStack } from './nestedStack/data'
@@ -7,9 +8,9 @@ import { PipelineNestedStack } from './nestedStack/pipeline'
 import { StorageNestedStack } from './nestedStack/storage'
 import { AppsyncNestedStack } from './nestedStack/appsync'
 
-const applicationNamingPrefix = 'iyiye'
-const userFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-user`
-const kitQueryFuncName = `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-kit-query`
+const appNamingPrefix = 'iyiye'
+const userFuncName = `${appNamingPrefix}-${process.env.ENVIRONMENT}-user`
+const kitQueryFuncName = `${appNamingPrefix}-${process.env.ENVIRONMENT}-kit-query`
 const rdsDatabaseNames = {
   notification: 'notif',
   portfolio: 'portf',
@@ -23,17 +24,17 @@ export class IyiyeNativeCdkStack extends Stack {
     super(scope, id, props)
 
     const storageStack = new StorageNestedStack(this, 'StorageNestedStack', {
-      metaFilesBucketName: `${applicationNamingPrefix}-meta-files`,
-      userFilesBucketName: `${applicationNamingPrefix}-user-files`
+      metaFilesBucketName: `${appNamingPrefix}-meta-files`,
+      userFilesBucketName: `${appNamingPrefix}-user-files`
     })
 
     const cognitoStack = new CognitoNestedStack(this, 'CognitoNestedStack', {
-      userPoolName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up`,
-      userPoolClientName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up-cl`,
-      userPoolNativeClientName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-up-ncl`,
+      userPoolName: `${appNamingPrefix}-${process.env.ENVIRONMENT}-up`,
+      userPoolClientName: `${appNamingPrefix}-${process.env.ENVIRONMENT}-up-cl`,
+      userPoolNativeClientName: `${appNamingPrefix}-${process.env.ENVIRONMENT}-up-ncl`,
       defaultUserPoolGroupName: 'default-ug',
       adminUserPoolGroupName: 'admin-ug',
-      identityPoolName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-ip`,
+      identityPoolName: `${appNamingPrefix}-${process.env.ENVIRONMENT}-ip`,
       userFilesBucketArn: storageStack.userFilesBucket.bucketArn
     })
 
@@ -42,8 +43,9 @@ export class IyiyeNativeCdkStack extends Stack {
     const dataStack = new DataNestedStack(this, 'DataNestedStack', {
       rdsVpc: networkStack.vpc,
       rdsVpcSecurityGroups: [networkStack.rdsSecurityGroup],
-      rdsDbClusterIdentifier: `${process.env.ENVIRONMENT}-${applicationNamingPrefix}-rds-cluster`
-      // categoryTableName: `${process.env.ENVIRONMENT}.${applicationNamingPrefix}.kit_category`
+      rdsDbClusterIdentifier: `${process.env.ENVIRONMENT}-${appNamingPrefix}-rds-cluster`,
+      kitCategoryTableName: `${process.env.ENVIRONMENT}.${appNamingPrefix}.kit_category`,
+      kitTableName: `${process.env.ENVIRONMENT}.${appNamingPrefix}.kit`
     })
 
     new PipelineNestedStack(this, 'PipelineNestedStack', {
@@ -61,11 +63,11 @@ export class IyiyeNativeCdkStack extends Stack {
         dbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
         dbCredentialsSecretArn: dataStack.dbSecret.secretArn
       },
-      artifactStoreBucketName: `${applicationNamingPrefix}-pipeline-artifacts`
+      artifactStoreBucketName: `${appNamingPrefix}-pipeline-artifacts`
     })
 
     new AppsyncNestedStack(this, 'AppsyncNestedStack', {
-      appsyncApiName: `${applicationNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
+      appsyncApiName: `${appNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       lambda: {
         userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`,

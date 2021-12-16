@@ -1,10 +1,5 @@
-import { Bucket, HttpMethods } from '@aws-cdk/aws-s3'
-import {
-  Construct,
-  NestedStack,
-  NestedStackProps,
-  RemovalPolicy
-} from '@aws-cdk/core'
+import { Construct } from 'constructs'
+import { NestedStack, NestedStackProps, RemovalPolicy, aws_s3 as s3 } from 'aws-cdk-lib'
 
 interface StorageNestedStackProps extends NestedStackProps {
   userFilesBucketName: string
@@ -13,8 +8,8 @@ interface StorageNestedStackProps extends NestedStackProps {
 
 export class StorageNestedStack extends NestedStack {
   // Properties
-  readonly metaFilesBucket: Bucket
-  readonly userFilesBucket: Bucket
+  readonly metaFilesBucket: s3.Bucket
+  readonly userFilesBucket: s3.Bucket
 
   // Constructor
   constructor(scope: Construct, id: string, props: StorageNestedStackProps) {
@@ -22,19 +17,19 @@ export class StorageNestedStack extends NestedStack {
 
     //
 
-    this.metaFilesBucket = new Bucket(this, 'MetaFilesBucket', {
+    this.metaFilesBucket = new s3.Bucket(this, 'MetaFilesBucket', {
       bucketName: props.metaFilesBucketName,
       publicReadAccess: true,
       removalPolicy: RemovalPolicy.RETAIN,
       cors: [
         {
           allowedOrigins: ['*'],
-          allowedMethods: [HttpMethods.GET]
+          allowedMethods: [s3.HttpMethods.GET]
         }
       ]
     })
 
-    this.userFilesBucket = new Bucket(this, 'UserFilesBucket', {
+    this.userFilesBucket = new s3.Bucket(this, 'UserFilesBucket', {
       bucketName: props.userFilesBucketName,
       removalPolicy: RemovalPolicy.RETAIN,
       versioned: true,
@@ -43,19 +38,14 @@ export class StorageNestedStack extends NestedStack {
           allowedOrigins: ['*'],
           allowedHeaders: ['*'],
           allowedMethods: [
-            HttpMethods.HEAD,
-            HttpMethods.GET,
-            HttpMethods.POST,
-            HttpMethods.PUT,
-            HttpMethods.DELETE
+            s3.HttpMethods.HEAD,
+            s3.HttpMethods.GET,
+            s3.HttpMethods.POST,
+            s3.HttpMethods.PUT,
+            s3.HttpMethods.DELETE
           ],
           maxAge: 3000,
-          exposedHeaders: [
-            'x-amz-server-side-encryption',
-            'x-amz-request-id',
-            'x-amz-id-2',
-            'ETag'
-          ]
+          exposedHeaders: ['x-amz-server-side-encryption', 'x-amz-request-id', 'x-amz-id-2', 'ETag']
         }
       ]
     })

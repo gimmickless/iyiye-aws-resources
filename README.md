@@ -37,6 +37,16 @@ To create it
 
 TBD
 
+## Database behind AppSync: DynamoDB vs Aurora
+
+I chose DynamoDB since:
+
+- It is easy with the VTLs
+
+However, DynamoDb sucks in the following ways:
+
+- No support for unique indexes.
+
 ## MySQL Database Queries
 
 Show schemas and tables:
@@ -70,3 +80,7 @@ Although one service may address more than one function (or none), we considered
 ## See Also
 
 - [List of Foods](https://en.wikipedia.org/wiki/Lists_of_foods)
+
+- [Choosing a good DynamoDB primary key](https://aws.amazon.com/premiumsupport/knowledge-center/primary-key-dynamodb-table/)
+
+- [AWS CDK V2 API Reference](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html)

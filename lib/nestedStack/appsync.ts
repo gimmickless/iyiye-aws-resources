@@ -1,21 +1,16 @@
 import { join } from 'path'
-import { Construct, NestedStack, NestedStackProps } from '@aws-cdk/core'
+import { Construct } from 'constructs'
 import {
-  GraphqlApi,
-  AuthorizationType,
-  Schema,
-  FieldLogLevel,
-  MappingTemplate
-} from '@aws-cdk/aws-appsync'
-import { UserPool } from '@aws-cdk/aws-cognito'
-import { Function } from '@aws-cdk/aws-lambda'
-import { IServerlessCluster } from '@aws-cdk/aws-rds'
-import { ISecret } from '@aws-cdk/aws-secretsmanager'
+  NestedStack,
+  NestedStackProps,
+  aws_cognito as cognito,
+  aws_lambda as lambda,
+  aws_rds as rds,
+  aws_secretsmanager as secretsmanager
+} from 'aws-cdk-lib'
+import * as appsync from '@aws-cdk/aws-appsync-alpha'
 import { notifDbInAppNotificationsTableName } from '../constants'
-import {
-  selectNotifDbInAppNotifications,
-  selectPortfDbKitCategories
-} from '../generic-queries'
+import { selectNotifDbInAppNotifications, selectPortfDbKitCategories } from '../generic-queries'
 
 interface AppsyncNestedStackProps extends NestedStackProps {
   appsyncApiName: string
@@ -25,8 +20,8 @@ interface AppsyncNestedStackProps extends NestedStackProps {
     kitQueryFuncArn: string
   }
   rds: {
-    dbCluster: IServerlessCluster
-    dbCredentialsSecretStore: ISecret
+    dbCluster: rds.IServerlessCluster
+    dbCredentialsSecretStore: secretsmanager.ISecret
     notificationDbName: string
     portfolioDbName: string
   }
@@ -63,47 +58,36 @@ export class AppsyncNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: AppsyncNestedStackProps) {
     super(scope, id, props)
 
-    const graphqlApi = new GraphqlApi(this, 'AppsyncApi', {
+    const graphqlApi = new appsync.GraphqlApi(this, 'AppsyncApi', {
       name: props.appsyncApiName,
-      schema: Schema.fromAsset(join(__dirname, 'schema.graphql')),
+      schema: appsync.Schema.fromAsset(join(__dirname, 'schema.graphql')),
       authorizationConfig: {
         defaultAuthorization: {
-          authorizationType: AuthorizationType.USER_POOL,
+          authorizationType: appsync.AuthorizationType.USER_POOL,
           userPoolConfig: {
-            userPool: UserPool.fromUserPoolId(
-              this,
-              'AppsyncAuthUserPool',
-              props.cognitoUserPoolId
-            )
+            userPool: cognito.UserPool.fromUserPoolId(this, 'AppsyncAuthUserPool', props.cognitoUserPoolId)
           }
         },
         additionalAuthorizationModes: [
           {
-            authorizationType: AuthorizationType.IAM
+            authorizationType: appsync.AuthorizationType.IAM
           }
         ]
       },
       logConfig: {
-        fieldLogLevel: FieldLogLevel.ERROR
+        fieldLogLevel: appsync.FieldLogLevel.ERROR
       }
     })
 
     // Data Sources
-    const userFuncDS = graphqlApi.addLambdaDataSource(
-      'UserFunc',
-      Function.fromFunctionArn(
-        this,
-        'AppsyncUserFunc',
-        props.lambda.userFuncArn
-      )
-    )
+    const userFuncDS = new appsync.LambdaDataSource(this, 'UserFunc', {
+      api: graphqlApi,
+      name: 'userFuncDS',
+      lambdaFunction: lambda.Function.fromFunctionArn(this, 'AppsyncUserFunc', props.lambda.userFuncArn)
+    })
     const kitQueryFuncDS = graphqlApi.addLambdaDataSource(
       'KitQueryFunc',
-      Function.fromFunctionArn(
-        this,
-        'AppsyncKitQueryFunc',
-        props.lambda.kitQueryFuncArn
-      )
+      lambda.Function.fromFunctionArn(this, 'AppsyncKitQueryFunc', props.lambda.kitQueryFuncArn)
     )
     const notificationRdsDS = graphqlApi.addRdsDataSource(
       'NotificationRds',
@@ -128,7 +112,7 @@ export class AppsyncNestedStack extends NestedStack {
     portfolioRdsDS.createResolver({
       typeName: 'Query',
       fieldName: 'kitCategoryList',
-      requestMappingTemplate: MappingTemplate.fromString(`
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
       #set ($statement = "
         ${selectPortfDbKitCategories}
         Order By name
@@ -139,9 +123,7 @@ export class AppsyncNestedStack extends NestedStack {
           $util.toJson($statement)
         ]
       }`),
-      responseMappingTemplate: MappingTemplate.fromString(
-        rdsListResponseMappingTemplate
-      )
+      responseMappingTemplate: appsync.MappingTemplate.fromString(rdsListResponseMappingTemplate)
     })
     kitQueryFuncDS.createResolver({
       typeName: 'Query',
@@ -164,7 +146,7 @@ export class AppsyncNestedStack extends NestedStack {
     notificationRdsDS.createResolver({
       typeName: 'Query',
       fieldName: 'inAppNotificationList',
-      requestMappingTemplate: MappingTemplate.fromString(`
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
       #set ($statement = "
         ${selectNotifDbInAppNotifications}
         Where receiver_username=:USERNAME
@@ -181,14 +163,12 @@ export class AppsyncNestedStack extends NestedStack {
           ":OFFSET": $util.defaultIfNull(\${ctx.args.offset}, 0),
         }
       }`),
-      responseMappingTemplate: MappingTemplate.fromString(
-        rdsListResponseMappingTemplate
-      )
+      responseMappingTemplate: appsync.MappingTemplate.fromString(rdsListResponseMappingTemplate)
     })
     notificationRdsDS.createResolver({
       typeName: 'Mutation',
       fieldName: 'createInAppNotification',
-      requestMappingTemplate: MappingTemplate.fromString(`
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
       #set($insertStatement="
         Insert Into ${notifDbInAppNotificationsTableName}
         (type, receiver_username, body) Values
@@ -213,14 +193,12 @@ export class AppsyncNestedStack extends NestedStack {
           ":BODY": $util.toJson($ctx.args.input.body)
         }
       }`),
-      responseMappingTemplate: MappingTemplate.fromString(
-        rdsMutationResponseMappingTemplate
-      )
+      responseMappingTemplate: appsync.MappingTemplate.fromString(rdsMutationResponseMappingTemplate)
     })
     notificationRdsDS.createResolver({
       typeName: 'Mutation',
       fieldName: 'updateInAppNotificationsForUserAsRead',
-      requestMappingTemplate: MappingTemplate.fromString(`
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
       #set($updateStatement="
         Update ${notifDbInAppNotificationsTableName}
         Set is_read=true
@@ -241,9 +219,7 @@ export class AppsyncNestedStack extends NestedStack {
           ":USERNAME": $util.toJson($ctx.args.input.receiverUsername)
         }
       }`),
-      responseMappingTemplate: MappingTemplate.fromString(
-        rdsMutationResponseMappingTemplate
-      )
+      responseMappingTemplate: appsync.MappingTemplate.fromString(rdsMutationResponseMappingTemplate)
     })
   }
 }

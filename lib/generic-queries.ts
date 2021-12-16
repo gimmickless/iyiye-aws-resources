@@ -1,7 +1,4 @@
-import {
-  notifDbInAppNotificationsTableName,
-  portfDbKitCategoriesTableName
-} from './constants'
+import { notifDbInAppNotificationsTableName, portfDbKitCategoriesTableName } from './constants'
 
 export const selectNotifDbInAppNotifications = `
 Select
