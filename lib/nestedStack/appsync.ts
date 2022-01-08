@@ -17,7 +17,6 @@ interface AppsyncNestedStackProps extends NestedStackProps {
   cognitoUserPoolId: string
   lambda: {
     userFuncArn: string
-    kitQueryFuncArn: string
   }
   rds: {
     dbCluster: rds.IServerlessCluster
@@ -85,10 +84,6 @@ export class AppsyncNestedStack extends NestedStack {
       name: 'userFuncDS',
       lambdaFunction: lambda.Function.fromFunctionArn(this, 'AppsyncUserFunc', props.lambda.userFuncArn)
     })
-    const kitQueryFuncDS = graphqlApi.addLambdaDataSource(
-      'KitQueryFunc',
-      lambda.Function.fromFunctionArn(this, 'AppsyncKitQueryFunc', props.lambda.kitQueryFuncArn)
-    )
     const notificationRdsDS = graphqlApi.addRdsDataSource(
       'NotificationRds',
       props.rds.dbCluster,
@@ -124,22 +119,6 @@ export class AppsyncNestedStack extends NestedStack {
         ]
       }`),
       responseMappingTemplate: appsync.MappingTemplate.fromString(rdsListResponseMappingTemplate)
-    })
-    kitQueryFuncDS.createResolver({
-      typeName: 'Query',
-      fieldName: 'curatedKitList'
-    })
-    kitQueryFuncDS.createResolver({
-      typeName: 'Query',
-      fieldName: 'faveKitList'
-    })
-    kitQueryFuncDS.createResolver({
-      typeName: 'Query',
-      fieldName: 'recentlyOrderedKitList'
-    })
-    kitQueryFuncDS.createResolver({
-      typeName: 'Query',
-      fieldName: 'newlyAddedKitList'
     })
 
     // Notification Resolvers

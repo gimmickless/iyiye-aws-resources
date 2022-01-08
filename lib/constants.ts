@@ -9,3 +9,5 @@ export const defaultGitHubBranch = 'main'
 export const notifDbInAppNotificationsTableName = 'notif.in_app_notification'
 
 export const portfDbKitCategoriesTableName = 'portf.kit_category'
+
+export const openSearchDataNodeInstanceType = 't2.small.search'

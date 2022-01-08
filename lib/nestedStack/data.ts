@@ -6,12 +6,16 @@ import {
   Tags,
   aws_ec2 as ec2,
   aws_dynamodb as dynamodb,
+  aws_opensearchservice as opensearch,
   aws_rds as rds
 } from 'aws-cdk-lib'
+import { openSearchDataNodeInstanceType } from '../constants'
 
 interface DataNestedStackProps extends NestedStackProps {
   kitCategoryTableName: string
   kitTableName: string
+  searchDomainName: string
+  searchVpc: ec2.IVpc
   rdsVpc: ec2.IVpc
   rdsVpcSecurityGroups: Array<ec2.SecurityGroup>
   rdsDbClusterIdentifier: string
@@ -21,6 +25,7 @@ export class DataNestedStack extends NestedStack {
   // Properties
   readonly kitCategoryTable: dynamodb.Table
   readonly kitTable: dynamodb.Table
+  readonly searchDomain: opensearch.Domain
   readonly dbSecret: rds.DatabaseSecret
   readonly shoppingCartTable: dynamodb.Table
   readonly databaseCluster: rds.ServerlessCluster
@@ -42,10 +47,27 @@ export class DataNestedStack extends NestedStack {
       tableName: props.kitTableName,
       partitionKey: { name: 'name', type: dynamodb.AttributeType.STRING },
       readCapacity: 1,
-      writeCapacity: 1
+      writeCapacity: 1,
+      stream: dynamodb.StreamViewType.NEW_IMAGE
     })
     Tags.of(this.kitCategoryTable).add('name', props.kitCategoryTableName)
     Tags.of(this.kitCategoryTable).add('environment', process.env.ENVIRONMENT ?? '')
+
+    // OpenSearch
+    this.searchDomain = new opensearch.Domain(this, 'KitSearchDomain', {
+      domainName: props.searchDomainName,
+      version: opensearch.EngineVersion.OPENSEARCH_1_0,
+      capacity: {
+        dataNodes: 1,
+        dataNodeInstanceType: openSearchDataNodeInstanceType
+      },
+      enableVersionUpgrade: true,
+      vpc: props.searchVpc,
+      vpcSubnets: [{
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED
+      }]
+    })
+
 
     // RDS
     this.dbSecret = new rds.DatabaseSecret(this, 'AuroraRdsSecret', {

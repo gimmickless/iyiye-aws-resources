@@ -10,7 +10,7 @@ import { AppsyncNestedStack } from './nestedStack/appsync'
 
 const appNamingPrefix = 'iyiye'
 const userFuncName = `${appNamingPrefix}-${process.env.ENVIRONMENT}-user`
-const kitQueryFuncName = `${appNamingPrefix}-${process.env.ENVIRONMENT}-kit-query`
+const ddsToOpensearchFuncName = `${appNamingPrefix}-${process.env.ENVIRONMENT}-dds-to-opensearch`
 const rdsDatabaseNames = {
   notification: 'notif',
   portfolio: 'portf',
@@ -18,6 +18,10 @@ const rdsDatabaseNames = {
   warehouse: 'whs',
   order: 'order',
   delivery: 'deliv'
+}
+
+const opensearchIndexes = {
+  kits: 'kits',
 }
 export class IyiyeNativeCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -45,23 +49,25 @@ export class IyiyeNativeCdkStack extends Stack {
       rdsVpcSecurityGroups: [networkStack.rdsSecurityGroup],
       rdsDbClusterIdentifier: `${process.env.ENVIRONMENT}-${appNamingPrefix}-rds-cluster`,
       kitCategoryTableName: `${process.env.ENVIRONMENT}.${appNamingPrefix}.kit_category`,
-      kitTableName: `${process.env.ENVIRONMENT}.${appNamingPrefix}.kit`
+      kitTableName: `${process.env.ENVIRONMENT}.${appNamingPrefix}.kit`,
+      searchDomainName: `${process.env.ENVIRONMENT}.${appNamingPrefix}-kit-search`,
+      searchVpc: networkStack.vpc,
     })
 
     new PipelineNestedStack(this, 'PipelineNestedStack', {
       lambda: {
         userFuncName: userFuncName,
-        kitQueryFuncName: kitQueryFuncName
+        ddsToOpensearchFuncName: ddsToOpensearchFuncName
       },
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       github: {
         functionReposOwnerName: 'gimmickless',
         userFunctionRepoName: 'user-function',
-        kitQueryFunctionRepoName: 'kit-query-function'
+        ddsToOpensearchFunctionRepoName: 'dds-to-opensearch-function'
       },
-      rds: {
-        dbClusterArn: `arn:aws:rds:${this.region}:${this.account}:cluster:${dataStack.databaseCluster.clusterArn}`,
-        dbCredentialsSecretArn: dataStack.dbSecret.secretArn
+      opensearch: {
+        host: dataStack.searchDomain.domainEndpoint,
+        kitsIndex: opensearchIndexes.kits
       },
       artifactStoreBucketName: `${appNamingPrefix}-pipeline-artifacts`
     })
@@ -70,8 +76,7 @@ export class IyiyeNativeCdkStack extends Stack {
       appsyncApiName: `${appNamingPrefix}-${process.env.ENVIRONMENT}-appsync-api`,
       cognitoUserPoolId: cognitoStack.userPool.userPoolId,
       lambda: {
-        userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`,
-        kitQueryFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${kitQueryFuncName}`
+        userFuncArn: `arn:aws:lambda:${this.region}:${this.account}:function:${userFuncName}`
       },
       rds: {
         dbCluster: dataStack.databaseCluster,
@@ -79,6 +84,7 @@ export class IyiyeNativeCdkStack extends Stack {
         notificationDbName: rdsDatabaseNames.notification,
         portfolioDbName: rdsDatabaseNames.portfolio
       }
+      // TODO: add opensearch
     })
   }
 }

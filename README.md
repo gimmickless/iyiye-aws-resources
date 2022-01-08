@@ -84,3 +84,5 @@ Although one service may address more than one function (or none), we considered
 - [Choosing a good DynamoDB primary key](https://aws.amazon.com/premiumsupport/knowledge-center/primary-key-dynamodb-table/)
 
 - [AWS CDK V2 API Reference](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html)
+
+- [AWS OpenSearch - Load Streaming Data from DynamoDB](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/integrations.html#integrations-dynamodb)

@@ -17,18 +17,18 @@ import { defaultGitHubBranch } from '../constants'
 interface PipelineNestedStackProps extends NestedStackProps {
   lambda: {
     userFuncName: string
-    kitQueryFuncName: string
+    ddsToOpensearchFuncName: string
   }
   cognitoUserPoolId: string
   github: {
     functionReposOwnerName: string
     userFunctionRepoName: string
-    kitQueryFunctionRepoName: string
+    ddsToOpensearchFunctionRepoName: string
   }
   artifactStoreBucketName: string
-  rds: {
-    dbClusterArn: string
-    dbCredentialsSecretArn: string
+  opensearch: {
+    host: string
+    kitsIndex: string
   }
 }
 
@@ -37,7 +37,7 @@ export class PipelineNestedStack extends NestedStack {
     super(scope, id, props)
 
     const userFuncPipelineBuildProjectLogGroup = new logs.LogGroup(this, `UserFuncPipelineBuildProjectLogGroup`)
-    const kitQueryFuncPipelineBuildProjectLogGroup = new logs.LogGroup(this, `KitQueryFuncPipelineBuildProjectLogGroup`)
+    const ddsToOpensearchFuncPipelineBuildProjectLogGroup = new logs.LogGroup(this, `DdsToOpensearchFuncPipelineBuildProjectLogGroup`)
 
     const pipelineArtifactStoreBucket = new s3.Bucket(this, 'PipelineArtifactStoreBucket', {
       bucketName: props.artifactStoreBucketName,
@@ -71,12 +71,12 @@ export class PipelineNestedStack extends NestedStack {
         }
       }
     })
-    const kitQueryFuncPipelineBuildProject = new codebuild.PipelineProject(this, 'KitQueryFuncPipelineBuildProject', {
+    const ddsToOpensearchFuncPipelineBuildProject = new codebuild.PipelineProject(this, 'DdsToOpensearchFuncPipelineBuildProject', {
       ...defaultPipelineProjectProps,
-      projectName: `${process.env.APPLICATION}-kit-query-fn-bp`,
+      projectName: `${process.env.APPLICATION}-dds-to-opensearch-fn-bp`,
       logging: {
         cloudWatch: {
-          logGroup: kitQueryFuncPipelineBuildProjectLogGroup
+          logGroup: ddsToOpensearchFuncPipelineBuildProjectLogGroup
         }
       }
     })
@@ -84,8 +84,8 @@ export class PipelineNestedStack extends NestedStack {
     // Artifacts
     const userFuncSourceOutput = new codepipeline.Artifact('CUSrc')
     const userFuncBuildOutput = new codepipeline.Artifact('CUBld')
-    const kitQueryFuncSourceOutput = new codepipeline.Artifact('KQSrc')
-    const kitQueryFuncBuildOutput = new codepipeline.Artifact('KQBld')
+    const ddsToOpensearchFuncSourceOutput = new codepipeline.Artifact('DOSrc')
+    const ddsToOpensearchFuncBuildOutput = new codepipeline.Artifact('DOBld')
 
     // Pipelines
     new codepipeline.Pipeline(this, 'UserFuncPipeline', {
@@ -143,8 +143,8 @@ export class PipelineNestedStack extends NestedStack {
         }
       ]
     })
-    new codepipeline.Pipeline(this, 'KitQueryFuncPipeline', {
-      pipelineName: `${process.env.APPLICATION}-kit-query-fn-pl`,
+    new codepipeline.Pipeline(this, 'DdsToOpensearchFuncPipeline', {
+      pipelineName: `${process.env.APPLICATION}-dds-to-opensearch-fn-pl`,
       crossAccountKeys: false,
       artifactBucket: pipelineArtifactStoreBucket,
       restartExecutionOnUpdate: true,
@@ -155,13 +155,13 @@ export class PipelineNestedStack extends NestedStack {
             new codepipelineactions.GitHubSourceAction({
               actionName: 'FetchSource',
               owner: props.github.functionReposOwnerName,
-              repo: props.github.kitQueryFunctionRepoName,
+              repo: props.github.ddsToOpensearchFunctionRepoName,
               branch: defaultGitHubBranch,
               oauthToken: SecretValue.secretsManager(process.env.GITHUB_TOKEN_SECRET_ID ?? '', {
                 jsonField: 'token'
               }),
               trigger: codepipelineactions.GitHubTrigger.WEBHOOK,
-              output: kitQueryFuncSourceOutput
+              output: ddsToOpensearchFuncSourceOutput
             })
           ]
         },
@@ -170,9 +170,9 @@ export class PipelineNestedStack extends NestedStack {
           actions: [
             new codepipelineactions.CodeBuildAction({
               actionName: 'BuildFunction',
-              input: kitQueryFuncSourceOutput,
-              outputs: [kitQueryFuncBuildOutput],
-              project: kitQueryFuncPipelineBuildProject
+              input: ddsToOpensearchFuncSourceOutput,
+              outputs: [ddsToOpensearchFuncBuildOutput],
+              project: ddsToOpensearchFuncPipelineBuildProject
             })
           ]
         },
@@ -181,16 +181,19 @@ export class PipelineNestedStack extends NestedStack {
           actions: [
             new codepipelineactions.CloudFormationCreateUpdateStackAction({
               actionName: 'DeployFunction',
-              stackName: `${process.env.APPLICATION}-kit-query-fn-stack`,
+              stackName: `${process.env.APPLICATION}-dds-to-opensearch-fn-stack`,
               adminPermissions: true,
               cfnCapabilities: [CfnCapabilities.AUTO_EXPAND, CfnCapabilities.NAMED_IAM],
-              templatePath: kitQueryFuncBuildOutput.atPath('output-template.yml'),
+              templatePath: ddsToOpensearchFuncBuildOutput.atPath('output-template.yml'),
               parameterOverrides: {
-                FunctionName: props.lambda.kitQueryFuncName,
+                FunctionName: props.lambda.ddsToOpensearchFuncName,
+                Region: this.region,
+                SearchHost: props.opensearch.host,
+                KitsIndex: props.opensearch.kitsIndex,
                 Environment: process.env.ENVIRONMENT as string,
                 Application: process.env.APPLICATION as string
               },
-              extraInputs: [kitQueryFuncBuildOutput],
+              extraInputs: [ddsToOpensearchFuncBuildOutput],
               replaceOnFailure: true
             })
           ]
