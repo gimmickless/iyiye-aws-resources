@@ -6,11 +6,13 @@ import {
   aws_cognito as cognito,
   aws_lambda as lambda,
   aws_rds as rds,
-  aws_secretsmanager as secretsmanager
+  aws_secretsmanager as secretsmanager,
+  aws_dynamodb as dynamodb,
+  aws_opensearchservice as opensearch
 } from 'aws-cdk-lib'
 import * as appsync from '@aws-cdk/aws-appsync-alpha'
 import { notifDbInAppNotificationsTableName } from '../constants'
-import { selectNotifDbInAppNotifications, selectPortfDbKitCategories } from '../generic-queries'
+import { selectNotifDbInAppNotifications } from '../generic-queries'
 
 interface AppsyncNestedStackProps extends NestedStackProps {
   appsyncApiName: string
@@ -22,7 +24,13 @@ interface AppsyncNestedStackProps extends NestedStackProps {
     dbCluster: rds.IServerlessCluster
     dbCredentialsSecretStore: secretsmanager.ISecret
     notificationDbName: string
-    portfolioDbName: string
+  }
+  dynamodb: {
+    kitCategories: dynamodb.ITable
+    kits: dynamodb.ITable
+  }
+  opensearch: {
+    domain: opensearch.IDomain
   }
 }
 
@@ -84,41 +92,28 @@ export class AppsyncNestedStack extends NestedStack {
       name: 'userFuncDS',
       lambdaFunction: lambda.Function.fromFunctionArn(this, 'AppsyncUserFunc', props.lambda.userFuncArn)
     })
+    const kitCatgDS = graphqlApi.addDynamoDbDataSource('KitCatgDS', props.dynamodb.kitCategories)
+    const kitDS = graphqlApi.addDynamoDbDataSource('KitDS', props.dynamodb.kits)
+    const kitSearchDS = graphqlApi.addElasticsearchDataSource('KitSearchDS', props.opensearch.domain)
+
     const notificationRdsDS = graphqlApi.addRdsDataSource(
       'NotificationRds',
       props.rds.dbCluster,
       props.rds.dbCredentialsSecretStore,
       props.rds.notificationDbName
     )
-    const portfolioRdsDS = graphqlApi.addRdsDataSource(
-      'PortfolioRds',
-      props.rds.dbCluster,
-      props.rds.dbCredentialsSecretStore,
-      props.rds.portfolioDbName
-    )
 
-    // User Resolvers
+    // Resolvers
     userFuncDS.createResolver({
       typeName: 'Query',
       fieldName: 'userBasicInfo'
     })
 
-    // Portfolio Resolvers
-    portfolioRdsDS.createResolver({
+    kitCatgDS.createResolver({
       typeName: 'Query',
       fieldName: 'kitCategoryList',
-      requestMappingTemplate: appsync.MappingTemplate.fromString(`
-      #set ($statement = "
-        ${selectPortfDbKitCategories}
-        Order By name
-      ")
-      {
-        "version": "2018-05-29",
-        "statements": [
-          $util.toJson($statement)
-        ]
-      }`),
-      responseMappingTemplate: appsync.MappingTemplate.fromString(rdsListResponseMappingTemplate)
+      requestMappingTemplate: appsync.MappingTemplate.dynamoDbScanTable(),
+      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList()
     })
 
     // Notification Resolvers

@@ -81,10 +81,15 @@ export class IyiyeNativeCdkStack extends Stack {
       rds: {
         dbCluster: dataStack.databaseCluster,
         dbCredentialsSecretStore: dataStack.dbSecret,
-        notificationDbName: rdsDatabaseNames.notification,
-        portfolioDbName: rdsDatabaseNames.portfolio
+        notificationDbName: rdsDatabaseNames.notification
+      },
+      dynamodb: {
+        kitCategories: dataStack.kitCategoryTable,
+        kits: dataStack.kitTable
+      },
+      opensearch: {
+        domain: dataStack.searchDomain
       }
-      // TODO: add opensearch
     })
   }
 }
