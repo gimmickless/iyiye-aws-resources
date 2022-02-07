@@ -5,6 +5,8 @@ type Query
   userBasicInfo(username: String!): User
     @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
 
+  
+  
   inAppNotificationList(
     username: String!
     limit: Int
@@ -12,7 +14,7 @@ type Query
   ): [InAppNotification]
     @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
 
-  kitCategoryList: [KitCategory]
+  kitCategoryList(): [KitCategory]
 
   curatedKitList(username: String!, limit: Int, offset: Int): [Kit]
 
@@ -21,6 +23,18 @@ type Query
   recentlyOrderedKitList(username: String!, limit: Int, offset: Int): [Kit]
 
   newlyAddedKitList(limit: Int, offset: Int): [Kit]
+
+  kit(id: ID!): Kit
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  kitList(): [Kit]
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  order(id: ID!): Order
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  orderList(username: String!, limit: Int, offset: Int): [Order]
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
 }
 
 # M U T A T I O N S
@@ -29,9 +43,36 @@ type Mutation @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
     input: CreateInAppNotificationInput!
   ): InAppNotification
     @aws_cognito_user_pools(cognito_groups: ["iyiye-admin-ug"])
+
   updateInAppNotificationsForUserAsRead(
     input: UpdateInAppNotificationsForUserAsReadInput!
   ): InAppNotification
+
+  # Kit
+  createKit(input: CreateKitInput!): Kit
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  approveKit(input: ApproveKitInput!): Kit
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-admin-ug"])
+
+  # Cart
+  updateCart(input: UpdateCartInput!): Cart
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  checkout(username: String!): Boolean
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  # Payment
+  completePayment(username: String!): Boolean
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  # Order
+  createOrder(input: CreateOrderInput!): Order
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"])
+
+  updateOrderStatus(orderId: String, status: OrderStatus): Order
+    @aws_cognito_user_pools(cognito_groups: ["iyiye-admin-ug"])
+
 }
 
 # S U B S C R I P T I O N S
@@ -56,9 +97,44 @@ input UpdateInAppNotificationsForUserAsReadInput
   receiverUsername: String!
 }
 
+input CreateKitInput
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  name: String!
+  version: String
+  description: String
+  authorUsername: ID
+  cuisineCountryCode: String
+  diets: String # Comma-separated list
+  recipe: String!
+  price: Float!
+  calorie: Int
+  prepTime: Int! # Minutes
+}
+
+input ApproveKitInput
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-admin-ug"]) {
+  id: ID!
+  approverUsername: ID
+}
+
+input UpdateCartInput
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  username: String!
+  kitId: ID!
+  quantity: Int!
+}
+
+input CreateOrderInput
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  username: String!
+  orderItemList: [OrderItem]!
+  totalPrice: Float!
+}
+
 # T Y P E S
 
-type User @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+type User
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
   username: String!
   picture: AWSURL
   bio: String
@@ -108,6 +184,26 @@ type Kit
   lastUpdateTime: AWSTimestamp!
 }
 
+type Order
+  @aws_iam
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  id: ID!
+  username: String!
+  orderItems: [OrderItem]
+  totalPrice: Float!
+  status: OrderStatus 
+  createdTime: AWSDateTime!
+  lastUpdatedTime: AWSDateTime!
+}
+
+type OrderItem
+  @aws_iam
+  @aws_cognito_user_pools(cognito_groups: ["iyiye-default-ug"]) {
+  id: ID!
+  kitId: ID!
+  quantity: Int!
+}
+
 # E N U M S
 
 enum InAppNotificationType {
@@ -117,6 +213,12 @@ enum InAppNotificationType {
   comment
   star
   flag
+}
+
+enum OrderStatus {
+  pending
+  approved
+  completed
 }
 
 enum IngredientUnit {
